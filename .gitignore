@@ -1,0 +1,30 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+app/pubspec.lock
+
+# Platform build outputs
+app/android/.gradle/
+app/android/local.properties
+app/ios/Pods/
+app/ios/Flutter/Generated.xcconfig
+app/macos/Flutter/ephemeral/
+app/linux/flutter/ephemeral/
+app/windows/flutter/ephemeral/
+
+# Secrets
+.env
+*.env
+supabase/.temp/
+
+# OS
+.DS_Store
+Thumbs.db
