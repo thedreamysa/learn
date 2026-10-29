@@ -22,20 +22,26 @@ docs/       الرؤية، المعمارية، خارطة الطريق، اله
 
 ## التشغيل لأول مرة
 
-1. ثبّت [Flutter](https://docs.flutter.dev/get-started/install) (الإصدار 3.27 أو أحدث).
-2. أنشئ ملفات المنصات (مرة واحدة فقط):
+1. ثبّت [Git](https://git-scm.com/download/win) و[Flutter](https://docs.flutter.dev/get-started/install) (الإصدار 3.27 أو أحدث) وتأكد بالأمر `flutter doctor`.
+2. انسخ المشروع. نفّذ كل سطر وحده (في PowerShell على ويندوز لا تستخدم `&&`):
    ```bash
+   git clone https://github.com/thedreamysa/learn.git
+   cd learn
+   git checkout ccr-18793e70-uvlk0z
    cd app
+   ```
+3. أنشئ ملفات المنصات (مرة واحدة فقط):
+   ```bash
    flutter create . --org sa.mirqah --project-name mirqah --platforms=android,ios,web,windows,macos,linux
    flutter pub get
    ```
-3. شغّل التطبيق:
+4. شغّل التطبيق:
    ```bash
    flutter run -d chrome        # الويب
    flutter run -d windows       # ويندوز (أو macos / linux)
    flutter run                  # جهاز أندرويد أو آيفون متصل
    ```
-4. يعمل التطبيق في **وضع التجربة** دون خادم. لربطه بـ Supabase:
+5. يعمل التطبيق في **وضع التجربة** دون خادم. لربطه بـ Supabase:
    ```bash
    flutter run --dart-define=SUPABASE_URL=https://xxxx.supabase.co --dart-define=SUPABASE_ANON_KEY=xxxx
    ```
