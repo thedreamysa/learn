@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تقرير مُعين مدرستي</title>
+  <link rel="stylesheet" href="report.css">
+</head>
+<body>
+  <nav class="toolbar no-print" aria-label="أدوات التقرير">
+    <div class="tb-brand"><b>مُعين</b> مدرستي</div>
+    <div class="tb-group">
+      <label>نوع التقرير
+        <select id="kind">
+          <option value="">تلقائي</option>
+          <option value="grades">درجات وتقويم</option>
+          <option value="attendance">حضور وغياب</option>
+          <option value="assignments">واجبات وتسليم</option>
+          <option value="teachers">نشاط المعلمين</option>
+          <option value="exams">اختبارات</option>
+          <option value="generic">بيانات عامة</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="show-data" checked> البيانات الكاملة</label>
+      <label class="check"><input type="checkbox" id="show-cards"> بطاقة لكل اسم</label>
+    </div>
+    <div class="tb-group">
+      <button class="btn" id="btn-columns" type="button">إعدادات الأعمدة</button>
+      <button class="btn" id="btn-csv" type="button">تصدير CSV</button>
+      <button class="btn primary" id="btn-print" type="button">طباعة / PDF</button>
+    </div>
+  </nav>
+
+  <main id="report" class="report" aria-live="polite">
+    <p class="loading">جارٍ إعداد التقرير…</p>
+  </main>
+
+  <dialog id="columns-dialog" dir="rtl">
+    <form method="dialog">
+      <h2><b>إعدادات</b> الأعمدة</h2>
+      <p class="hint">صحّح نوع العمود أو درجته العظمى إن أخطأ التقدير التلقائي. التغييرات تُطبّق على هذا التقرير فقط.</p>
+      <div class="table-wrap"><table class="cols-table" id="cols-table"></table></div>
+      <div class="dialog-actions">
+        <button class="btn" value="cancel" type="submit">إلغاء</button>
+        <button class="btn primary" value="apply" id="apply-columns" type="submit">تطبيق</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="../lib/numbers.js"></script>
+  <script src="../lib/analyzer.js"></script>
+  <script src="../lib/insights.js"></script>
+  <script src="../lib/data.js"></script>
+  <script src="report.js"></script>
+</body>
+</html>

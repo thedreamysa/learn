@@ -1,0 +1,12 @@
+{
+  "name": "muin-madrasati",
+  "version": "0.1.0",
+  "private": true,
+  "description": "مُعين مدرستي — إضافة Chrome لتقارير منصة مدرستي، تعمل محليًا بالكامل",
+  "scripts": {
+    "test": "node --test tests/unit.test.js",
+    "test:e2e": "node tests/e2e.js",
+    "pack": "rm -f ../muin-madrasati.zip && zip -r ../muin-madrasati.zip manifest.json _locales icons assets src -x '*.DS_Store'"
+  },
+  "devDependencies": {}
+}
