@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>إعدادات مُعين مدرستي</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header class="top">
+    <img src="../../icons/icon-48.png" alt="" width="40" height="40">
+    <div>
+      <h1><b>مُعين</b> مدرستي</h1>
+      <p>وكيل تقارير ذكي لمنصة مدرستي — يعمل على جهازك فقط</p>
+    </div>
+  </header>
+  <div class="grad-bar"></div>
+
+  <main>
+    <section id="welcome" class="card intro">
+      <h2><b>طريقة</b> الاستخدام</h2>
+      <ol>
+        <li>سجّل الدخول إلى <bdi>schools.madrasati.sa</bdi> وافتح أي صفحة فيها بيانات: الدرجات، الحضور، الواجبات، الاختبارات، نشاط المعلمين، لوحات القائد.</li>
+        <li>اضغط الزر العائم الدائري أسفل يسار الصفحة، أو أيقونة الإضافة في شريط المتصفح.</li>
+        <li>تظهر الجداول المكتشفة تلقائيًا مع نوع كل منها. اختر «تقرير ذكي» لتقرير قابل للطباعة، أو «CSV» لملف Excel.</li>
+        <li>إن لم يُكتشف الجدول، استخدم «اختيار يدوي» وانقر عليه مباشرة.</li>
+        <li>البيانات المقسّمة على صفحات: أضف كل صفحة إلى «مجموعة» وسيُدمجها مُعين دون تكرار.</li>
+      </ol>
+      <p class="hint" id="help">لا تحتاج أي إعداد مسبق، لكن تعبئة بيانات المدرسة أدناه تظهر في ترويسة التقارير.</p>
+    </section>
+
+    <form id="settings" class="card" autocomplete="off">
+      <h2><b>بيانات</b> الترويسة</h2>
+      <div class="grid">
+        <label>إدارة التعليم<input name="educationOffice" placeholder="الإدارة العامة للتعليم بمنطقة …"></label>
+        <label>اسم المدرسة<input name="schoolName" placeholder="مثال: الثانوية الأولى"></label>
+        <label>اسم المعلم/ة<input name="teacherName"></label>
+        <label>اسم مدير/ة المدرسة<input name="principalName"></label>
+      </div>
+      <label class="check"><input type="checkbox" name="showMoeLogo"> إظهار شعار وزارة التعليم في ترويسة التقارير المطبوعة</label>
+      <p class="hint">فعّله فقط للتقارير الرسمية الصادرة عن المدرسة. مُعين أداة مستقلة غير تابعة للوزارة.</p>
+
+      <h2><b>حدود</b> التقديرات والتنبيهات</h2>
+      <p class="hint">القيم الافتراضية شائعة الاستخدام. عدّلها لتطابق لائحة التقويم المعتمدة لمرحلتك.</p>
+      <div class="grid bands" id="bands"></div>
+      <div class="grid">
+        <label>الحد الأدنى للنجاح (٪)<input type="number" name="passMark" min="0" max="100" step="1"></label>
+        <label>حد «بحاجة إلى دعم» (٪)<input type="number" name="riskMark" min="0" max="100" step="1"></label>
+        <label>تنبيه نسبة الغياب (٪)<input type="number" name="absenceRateAlert" min="0" max="100" step="1"></label>
+        <label>تنبيه عدد مرات الغياب<input type="number" name="absenceCountAlert" min="0" step="1"></label>
+        <label>تنبيه الواجبات غير المسلّمة (٪)<input type="number" name="missingWorkAlert" min="0" max="100" step="1"></label>
+        <label>حذف المجموعات تلقائيًا بعد (يوم)<input type="number" name="retentionDays" min="1" max="365" step="1"></label>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn primary">حفظ</button>
+        <button type="button" class="btn" id="reset">استعادة الافتراضي</button>
+        <span id="saved" class="saved" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+
+    <section class="card">
+      <h2><b>الخصوصية</b> والبيانات</h2>
+      <ul class="privacy">
+        <li>لا يتصل مُعين بأي خادم، ولا يحمّل أي كود أو خط من الإنترنت.</li>
+        <li>يقرأ فقط ما يظهر لك في صفحات مدرستي بعد تسجيل دخولك، ولا يطّلع على كلمة المرور.</li>
+        <li>بيانات التقارير المفتوحة تبقى في ذاكرة المتصفح المؤقتة وتُمسح عند إغلاقه.</li>
+        <li>المجموعات التي تحفظها تبقى على جهازك وتُحذف تلقائيًا بعد المدة المحددة أعلاه.</li>
+      </ul>
+      <p>المحفوظ الآن: <span id="usage">…</span></p>
+      <button type="button" class="btn danger" id="wipe">حذف كل البيانات المحفوظة</button>
+    </section>
+  </main>
+
+  <script src="../lib/numbers.js"></script>
+  <script src="../lib/analyzer.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

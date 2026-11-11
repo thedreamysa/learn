@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "مُعين مدرستي — تقارير ذكية",
+  "short_name": "مُعين مدرستي",
+  "version": "0.1.0",
+  "description": "وكيل تقارير ذكي لمنصة مدرستي: يكتشف الجداول تلقائيًا ويحللها ويُخرج تقارير عربية قابلة للطباعة. يعمل محليًا بالكامل.",
+  "default_locale": "ar",
+  "minimum_chrome_version": "116",
+  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
+  "action": { "default_title": "مُعين مدرستي", "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png" } },
+  "background": { "service_worker": "src/background/service-worker.js" },
+  "options_page": "src/options/options.html",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://*.madrasati.sa/*"],
+      "js": ["src/lib/numbers.js", "src/lib/analyzer.js", "src/lib/data.js", "src/lib/extractor.js", "src/content/content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    { "resources": ["src/content/panel.css", "icons/icon-48.png"], "matches": ["https://*.madrasati.sa/*"] }
+  ],
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'none'" }
+}
