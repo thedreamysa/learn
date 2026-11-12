@@ -6,7 +6,7 @@
   const { m, makeClock } = MU;
 
   const FPS = 30;
-  const FORMAT = '16:9';
+  const FORMAT = U.pickFormat('16:9');
   const [W, H] = U.formatSize(FORMAT);
   const SAFE = U.safeArea(W, H);
   const clock = makeClock({ bpm: 90, offset: 0 }); // 1 beat = 0.667s, 1 bar = 2.667s
@@ -18,7 +18,7 @@
   let b = 0;
   BARS.forEach((n, i) => { sc[i + 1] = { bar: b, bars: n, t0: T(b), t1: T(b + n) }; b += n; });
   const TOTAL_BARS = b; // 64
-  const DURATION = T(TOTAL_BARS) + 2.4;
+  const DURATION = T(TOTAL_BARS) + 6.2; // the credits card runs after the last bar
   const at = (scene, bar = 0, beat = 0) => T(sc[scene].bar + bar, beat);
 
   const S = {
@@ -32,9 +32,9 @@
   // ---------- voiceover (real takes in vo/, durations measured with ffprobe) ----------
   const VO = [
     { s: 1, f: 'vo/s01.mp3', d: 2.35, off: 2.6, text: 'كل وطنٍ يبدأ بيد…' },
-    { s: 2, f: 'vo/s02.mp3', d: 9.72, off: 0.5, text: 'عام ألف وسبعمئة وسبعة وعشرين، اجتمعت الأيدي حول الإمام محمد بن سعود في الدرعية، فكان الأمن بعد الخوف، والوحدة بعد الفرقة.' },
+    { s: 2, f: 'vo/s02.mp3', d: 10.58, off: 0.5, text: 'عام ألف وسبعمئة وسبعة وعشرين، اجتمعت الأيدي حول الإمام محمد بن سعود في الدرعية، فكان الأمن بعد الخوف، والوحدة بعد الفرقة والشتات.' },
     { s: 3, f: 'vo/s03.mp3', d: 10.92, off: 0.5, text: 'وجاء المؤسس الملك عبدالعزيز، فجمع القلوب قبل الأرض، حتى صارت المملكة عام ألف وتسعمئة واثنين وثلاثين بيتًا واحدًا للجميع.' },
-    { s: 4, f: 'vo/s04.mp3', d: 13.4, off: 0.4, text: 'وتعاقب الملوك: سعود وفيصل وخالد وفهد وعبدالله، والشعب معهم يدًا بيد: جامعةٌ هنا، ومصنعٌ هناك، وحرمانِ يتسعان للملايين.' },
+    { s: 4, f: 'vo/s04.wav', d: 14.2, off: 0.4, text: 'وتعاقب الملوك: سعود وفيصل وخالد وفهد وعبدالله، والشعب معهم يدًا بيد: جامعةٌ هنا، ومصنعٌ هناك، وحرمانِ شريفان يتسعان للملايين.' },
     { s: 5, f: 'vo/s05.mp3', d: 11.15, off: 0.4, text: 'واليوم، في عهد الملك سلمان وبقيادة سمو ولي العهد، نعيش أسرع قفزة في تاريخنا. وكلما ارتفع البناء، كثُر من يتمنّى أن يسقط.' },
     { s: 6, f: 'vo/s06.mp3', d: 3.71, off: 1.2, gain: 2.4, text: 'أعداء اليوم لا يطرقون الباب… هم في جيبك.' },
     { s: 7, f: 'vo/s07.mp3', d: 5.56, off: 0.6, text: 'إشاعةٌ مجهولة المصدر، تُكتب لتُغضب، وتُنشر لتُفرّق.' },
@@ -45,7 +45,7 @@
     { s: 11, f: 'vo/s11b.wav', d: 1.97, off: 2 * BAR + 1.0, text: 'بلّغ ولا تجادل.' },
     { s: 11, f: 'vo/s11c.wav', d: 4.56, off: 4 * BAR + 1.0, text: 'واقترب ممن تحب، فالبيت المترابط لا تدخله الفتنة.' },
     { s: 12, f: 'vo/s12.mp3', d: 7.55, off: 0.7, text: 'من الشمال إلى الجنوب، ومن الشرق إلى الغرب، نحن لسنا أياديَ كثيرة… نحن يدٌ واحدة.' },
-    { s: 13, f: 'vo/s13.mp3', d: 5.25, off: 0.9, text: 'هذا الوطن أمانةٌ في أيدينا منذ ثلاثة قرون. ولن نفلتها.' },
+    { s: 13, f: 'vo/s13.mp3', d: 5.44, off: 0.9, text: 'هذا الوطن أمانةٌ في أيدينا منذ ثلاثة قرون. ولن نفلتها.' },
   ].map((v) => ({ ...v, at: sc[v.s].t0 + v.off, gain: v.gain || 1 }));
 
   // subtitles: each line split into clauses, timed by letter count across the take
@@ -71,7 +71,7 @@
     first: at(2, 2), // «تأسيس الدولة السعودية الأولى»
     y1932: at(3, 3), // the map completes in gold, ardah drum
     kings: [2.2, 3.05, 3.85, 4.65, 5.45].map((x) => sc[4].t0 + x), // each king's name card
-    panels: [0, BAR, 2 * BAR, 3 * BAR, 10.3, 12.4].map((x) => sc[4].t0 + x),
+    panels: [0, BAR, 2 * BAR, 3 * BAR, 9.8, 11.2].map((x) => sc[4].t0 + x),
     vision: at(5, 2), // «رؤية 2030»
     cut: sc[5].t0 + 0.4 + 11.1, // the music is cut on «يسقط»
     ping: at(6, 2), // a notification in the silence
@@ -88,6 +88,7 @@
     final: at(13, 0),
     grasp: at(13, 3), // the first hand, held by today's hand
     title: at(13, 4), // «يد واحدة — نحمي الوطن»
+    credits: at(13, 6), // the rights + accounts card
   };
   // forwards counter in scene 7: accelerating notification pings (seeded, same for sound and picture)
   const rnd = U.mulberry32(7);
@@ -101,6 +102,10 @@
     { name: 'الملك فهد', years: '1982 – 2005' },
     { name: 'الملك عبدالله', years: '2005 – 2015' },
   ];
+  const CREDIT = {
+    name: 'د. يحيى الأمير', role: 'فكرة وإعداد وتعليق', rights: 'جميع الحقوق محفوظة — د. يحيى الأمير', year: '© 2026',
+    accounts: [['X', '@y7yr_'], ['TikTok', '@i.y7y'], ['LinkedIn', 'in/yahya-alameer'], ['Linktree', 'linktr.ee/yalameer']],
+  };
   const CLASPS = ['جدٌّ وحفيد', 'معلّمٌ وطالب', 'جنديٌّ في الحدّ الجنوبي', 'طبيبة', 'صيّادٌ في جازان', 'مزارعٌ في القصيم'];
 
   const markers = {
@@ -117,8 +122,9 @@
     ardah: ev.ardah,
     grasp: ev.grasp,
     title: { t: ev.title, sync: 'av' },
+    credits: ev.credits,
   };
 
-  const SCORE = { FPS, FORMAT, W, H, SAFE, DURATION, clock, T, BEAT, BAR, S, m, sc, at, VO, subtitles, ev, fwd, KINGS, CLASPS, markers, TOTAL_BARS };
+  const SCORE = { FPS, FORMAT, W, H, SAFE, DURATION, clock, T, BEAT, BAR, S, m, sc, at, VO, subtitles, ev, fwd, KINGS, CLASPS, CREDIT, markers, TOTAL_BARS };
   if (node) module.exports = SCORE; else globalThis.SCORE = SCORE;
 })();

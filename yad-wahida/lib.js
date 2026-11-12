@@ -2,9 +2,10 @@
 (function () {
   const U = globalThis.U, G = globalThis.G, S = globalThis.SCORE;
   const { clamp, lerp, ease } = U;
-  const W = G.W, H = G.H;
+  const W = 1920, H = 1080 /* the stage; film.js fits it to the real frame */;
   const L = (globalThis.L = {});
   L.SCENES = {};
+  L.V = G.W < G.H; // the 9:16 cut: scenes re-stage a few elements, film.js adds the rest
 
   L.C = {
     gold: '#E7B954', goldHi: '#FFE49A', goldDark: '#A9792A', green: '#0E5A3A', greenDark: '#08301F', greenHi: '#1E8A5A',

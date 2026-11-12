@@ -3,7 +3,7 @@
   const U = globalThis.U, G = globalThis.G, Ch = globalThis.Ch, S = globalThis.SCORE, L = globalThis.L;
   const { clamp, lerp, ease } = U;
   const { ev, sc, BAR, BEAT } = S;
-  const W = G.W, H = G.H, C = L.C, SC = L.SCENES;
+  const W = 1920, H = 1080 /* the stage; film.js fits it to the real frame */, C = L.C, SC = L.SCENES;
 
   const coldBg = (ctx, t) => { L.sky(ctx, ['#050814', '#0A1230', '#0B1A44']); ctx.strokeStyle = 'rgba(80,120,220,0.08)'; ctx.lineWidth = 2; for (let x = 0; x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); } for (let y = 0; y < H; y += 80) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); } };
   const avatar = (ctx, x, y, r, col = '#5B6788') => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y - r * 0.25, r * 0.42, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(x, y + r * 0.75, r * 0.72, Math.PI, 0); ctx.fill(); };
@@ -22,7 +22,7 @@
     coldBg(ctx, t);
     const n = S.fwd.filter((f) => f.t <= t).length, N = S.fwd.length;
     // the web of forwards: every ping is one more node
-    const node = (f) => [860 + f.x * 940, 330 + f.y * 560];
+    const node = (f) => (L.V ? [20 + f.x * 840, 40 + f.y * 1000] : [860 + f.x * 940, 330 + f.y * 560]);
     ctx.lineWidth = 3;
     for (let i = 0; i < n; i++) { const f = S.fwd[i], [x, y] = node(f), p = i ? node(S.fwd[Math.floor(U.hash(i, 3) * i)]) : [520, 560]; ctx.strokeStyle = 'rgba(224,72,58,0.35)'; ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(x, y); ctx.stroke(); }
     for (let i = 0; i < n; i++) { const f = S.fwd[i], [x, y] = node(f), a = t - f.t, k = ease.outBack(clamp(a / 0.2), 2); L.glow(ctx, x, y, 90, 'rgba(224,72,58,0.5)', Math.exp(-a * 4)); ctx.save(); ctx.translate(x, y); ctx.scale(k, k); L.rr(ctx, -30, -22, 60, 44, 12, '#1D2A52', C.red, 3); ctx.fillStyle = '#fff'; ctx.fillRect(-18, -8, 36, 5); ctx.fillRect(-18, 4, 24, 5); ctx.restore(); }
@@ -36,7 +36,7 @@
     }, { rot: -0.04 });
     // the counter
     const val = n === 0 ? 0 : Math.round(Math.pow(10, 1 + 4 * (n / N)) / (n >= N ? 1 : 1)), shown = cr || n >= N ? 100000 : val;
-    if (n > 0) {
+    if (n > 0 && !L.V) {
       L.tx(ctx, 'مُعاد توجيهها', 1330, 150, 60, '#9FB6F0', { weight: 700 });
       const pk = 1 + 0.15 * Math.exp(-(t - S.fwd[n - 1].t) * 14);
       ctx.save(); ctx.translate(1330, 270); ctx.scale(pk, pk); L.tx(ctx, shown.toLocaleString('en-US') + ' مرة', 0, 0, 120, cr ? C.red : '#fff', { glow: cr ? 'rgba(224,72,58,0.9)' : null }); ctx.restore();
@@ -44,7 +44,7 @@
     ctx.restore();
     if (cr) { // the screen cracks like glass
       const a = clamp((t - ev.crack) / 0.12); ctx.fillStyle = `rgba(120,10,10,${0.22})`; ctx.fillRect(0, 0, W, H);
-      ctx.lineCap = 'round'; const ox = 900, oy = 520;
+      ctx.lineCap = 'round'; const ox = L.V ? 440 : 900, oy = 520;
       for (let i = 0; i < 18; i++) {
         let ang = (i / 18) * 6.283 + U.hash(i, 31) * 0.3, x = ox, y = oy; const len = (500 + 900 * U.hash(i, 32)) * a;
         ctx.strokeStyle = `rgba(235,245,255,${0.55 + 0.4 * U.hash(i, 33)})`; ctx.lineWidth = 2 + 4 * U.hash(i, 34); ctx.beginPath(); ctx.moveTo(x, y);
@@ -96,15 +96,15 @@
     // the blackmail message
     if (t >= ev.threat) {
       const a = t - ev.threat, k = ease.outBack(clamp(a / 0.3), 1.5);
-      Ch.person(ctx, { x: 1630, y: 1330, pose: 'stand', s: 1.75, gesture: 'phone', eyes: 'wide', brows: 'worried', mouth: 'o', lookY: 0.7, look: -0.4, style: { skin: '#D9A77C', hairStyle: 'hijab', hijab: '#6C5B7B', outfit: 'abaya', robe: '#1B1B26' } });
-      ctx.fillStyle = 'rgba(5,10,34,0.45)'; ctx.fillRect(1380, 300, 540, 780);
-      ctx.save(); ctx.translate(1420, 330); ctx.scale(k, k); ctx.rotate(0.03);
+      if (!L.V) Ch.person(ctx, { x: 1630, y: 1330, pose: 'stand', s: 1.75, gesture: 'phone', eyes: 'wide', brows: 'worried', mouth: 'o', lookY: 0.7, look: -0.4, style: { skin: '#D9A77C', hairStyle: 'hijab', hijab: '#6C5B7B', outfit: 'abaya', robe: '#1B1B26' } });
+      if (!L.V) { ctx.fillStyle = 'rgba(5,10,34,0.45)'; ctx.fillRect(1380, 300, 540, 780); }
+      ctx.save(); ctx.translate(L.V ? 570 : 1420, L.V ? 120 : 330); ctx.scale(k, k); ctx.rotate(0.03);
       L.rr(ctx, -330, -130, 660, 260, 30, '#2A0F14', C.red, 5);
       L.tx(ctx, 'رقم مجهول', 290, -70, 34, '#E58A7E', { align: 'right', weight: 700, shadow: false });
       L.tx(ctx, 'ادفعي… وإلا نشرتُ صورك', 290, 10, 54, '#fff', { align: 'right', shadow: false });
       L.tx(ctx, 'ابتزاز إلكتروني', 290, 88, 40, C.red, { align: 'right', shadow: false });
       ctx.restore();
-      L.glow(ctx, 1420, 330, 500, 'rgba(224,72,58,0.35)', Math.exp(-a * 3));
+      L.glow(ctx, L.V ? 570 : 1420, L.V ? 120 : 330, 500, 'rgba(224,72,58,0.35)', Math.exp(-a * 3));
     }
     L.flash(ctx, t, ev.mask, '255,255,255', 0.35, 9);
   };
@@ -131,7 +131,7 @@
       ctx.restore();
     }
     const v = ctx.createRadialGradient(960, 620, 380, 960, 620, 1100); v.addColorStop(0, 'rgba(4,6,14,0)'); v.addColorStop(1, 'rgba(4,6,14,0.92)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
-    L.pop(ctx, t, sc[9].t0 + 2.2, 'أغلى ما نملك: شبابنا', W / 2, 170, 96, C.goldHi, { glow: 'rgba(0,0,0,0.9)' });
+    L.pop(ctx, t, sc[9].t0 + 2.2, 'أغلى ما نملك: شبابنا', W / 2, 170, L.V ? 76 : 96, C.goldHi, { glow: 'rgba(0,0,0,0.9)' });
     const hb = ((u / BAR) % 1); ctx.fillStyle = `rgba(160,20,30,${0.10 * Math.exp(-hb * 5)})`; ctx.fillRect(0, 0, W, H);
   };
 
@@ -186,11 +186,13 @@
     if (sub) L.tx(ctx, sub, 0, h / 2 - 44, 40, '#3E2B08', { weight: 700, shadow: false });
     ctx.restore();
   };
+  L.goldCard = goldCard; L.RULES = RULES; L.SUB = SUB;
   SC[11] = (ctx, t, u) => {
     L.sky(ctx, ['#F6E7C2', '#F1DCAA', '#E6CB8F']);
     ctx.fillStyle = '#0E5A3A'; ctx.fillRect(0, 880, W, 200); ctx.fillStyle = C.gold; ctx.fillRect(0, 874, W, 8);
     let idx = 0; ev.cards.forEach((c, i) => { if (t >= c) idx = i; });
     if (t >= ev.cardsAll) { // the three rules together
+      if (L.V) { L.flash(ctx, t, ev.cardsAll, '255,244,214', 0.6, 8); return; }
       RULES.forEach((w, i) => goldCard(ctx, t, ev.cardsAll + i * 0.12, W - 390 - i * 570, 430, 500, 330, w, null, i === 2 ? 110 : 150));
       L.pop(ctx, t, ev.cardsAll + 0.5, 'بلّغ عبر القنوات الرسمية', W / 2, 760, 70, C.greenDark, { shadow: false });
       L.flash(ctx, t, ev.cardsAll, '255,244,214', 0.6, 8); return;
@@ -198,15 +200,15 @@
     const t0 = ev.cards[idx], a = t - t0, bob = Math.sin(t * 2) * 3;
     if (idx === 0) {
       Ch.person(ctx, { x: 520, y: 1010, pose: 'stand', s: 1.9, gesture: 'phone', eyes: 'normal', lookY: 0.5, look: 0.4, mouth: a > 1.6 ? 'smile' : 'flat', style: DAD });
-      ctx.save(); ctx.translate(900, 300 + bob); const k = ease.outBack(clamp((a - 0.5) / 0.3), 1.4); ctx.scale(k, k);
+      ctx.save(); ctx.translate(826, 300 + bob); const k = ease.outBack(clamp((a - 0.5) / 0.3), 1.4); ctx.scale(k, k);
       L.rr(ctx, -170, -120, 400, 250, 26, '#fff', C.green, 5); ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(150, -50, 44, 0, 7); ctx.fill(); avatar(ctx, 150, -50, 34, '#fff');
-      L.tx(ctx, 'حساب رسمي', 90, -38, 42, C.greenDark, { align: 'right', shadow: false });
+      L.tx(ctx, 'حساب رسمي', 92, -40, 36, C.greenDark, { align: 'right', shadow: false });
       for (let i = 0; i < 2; i++) L.rr(ctx, -140, 30 + i * 36, 330 - i * 90, 18, 9, '#D8D2C2');
-      const ck = clamp((a - 1.2) / 0.35); if (ck > 0) { ctx.fillStyle = C.gold; ctx.beginPath(); ctx.arc(-110, -50, 40 * ease.outBack(ck, 2), 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-128, -50); ctx.lineTo(-114, -34); ctx.lineTo(-90, -66); ctx.stroke(); }
+      const ck = clamp((a - 1.2) / 0.35); if (ck > 0) { ctx.fillStyle = C.gold; ctx.beginPath(); ctx.arc(-122, -50, 34 * ease.outBack(ck, 2), 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-138, -50); ctx.lineTo(-126, -36); ctx.lineTo(-104, -64); ctx.stroke(); }
       ctx.restore();
     } else if (idx === 1) {
       Ch.person(ctx, { x: 520, y: 1010, pose: 'stand', s: 1.9, gesture: 'phone', eyes: 'normal', brows: 'determined', lookY: 0.5, look: 0.4, mouth: a > 1.4 ? 'smile' : 'flat', style: GIRL });
-      ctx.save(); ctx.translate(900, 300 + bob); const k = ease.outBack(clamp((a - 0.4) / 0.3), 1.4); ctx.scale(k, k);
+      ctx.save(); ctx.translate(826, 300 + bob); const k = ease.outBack(clamp((a - 0.4) / 0.3), 1.4); ctx.scale(k, k);
       L.rr(ctx, -170, -130, 400, 280, 26, '#fff', C.red, 5); ctx.fillStyle = '#3A4670'; ctx.beginPath(); ctx.arc(150, -60, 44, 0, 7); ctx.fill(); avatar(ctx, 150, -60, 34, '#7A89B8');
       L.tx(ctx, 'حساب مشبوه', 90, -48, 40, '#8A2A22', { align: 'right', shadow: false });
       const done = a > 1.3, press = done ? 1 - 0.08 * Math.exp(-(a - 1.3) * 10) : 1;
@@ -223,7 +225,7 @@
       Ch.person(ctx, { x: 470, y: 716, pose: 'sit', s: 0.95, eyes: 'happy', mouth: 'smile', look: 0.7, headRot: 0.05 * Math.sin(t * 2), style: SON });
       const hb = (a * 0.6) % 1; ctx.save(); ctx.translate(596, 400 - hb * 110); ctx.globalAlpha = (1 - hb) * clamp(a - 0.8); G.heart(ctx, 0, 0, 2.4 + 1.2 * hb); ctx.restore();
     }
-    goldCard(ctx, t, t0, 1440, 430, 720, 440, RULES[idx], SUB[idx], idx === 2 ? 150 : 210);
+    if (!L.V) goldCard(ctx, t, t0, 1440, 430, 720, 440, RULES[idx], SUB[idx], idx === 2 ? 150 : 210);
     L.flash(ctx, t, t0, '255,244,214', 0.6, 8);
   };
 
@@ -265,7 +267,7 @@
       L.cap(ctx, -22, 14, 22, 8, 12, C.gold); ctx.restore();
     }
     L.pop(ctx, t, ev.ardah + 0.15, 'نحن يدٌ واحدة', W / 2, 300, 130, C.goldHi, { glow: 'rgba(0,0,0,0.6)' });
-    G.confetti(ctx, t, ev.ardah, { n: 90, seed: 5, spawn: 5 });
+    G.confetti(ctx, t, ev.ardah, { n: 90, seed: 5, spawn: 5, x0: 0, x1: W });
     L.flash(ctx, t, ev.ardah, '255,244,214', 0.8, 7);
   };
 
@@ -298,7 +300,7 @@
     L.clasp(ctx, W / 2, ti ? 700 : 600, 1.5, a / 0.5, { skin: '#8A5632', sleeve: '#B98A52' }, { skin: '#C98F62', sleeve: '#F7F4EC', cuff: C.gold });
     if (a > 0.5) { ctx.globalAlpha = 0.85; for (let i = 0; i < 9; i++) { ctx.fillStyle = C.clayDark; ctx.beginPath(); ctx.ellipse(W / 2 - 330 + i * 34 + 20 * U.hash(i, 3), (ti ? 700 : 600) + 20 + 50 * U.hash(i, 4) - 20, 16 + 12 * U.hash(i, 5), 9, 0.3, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
     L.dust(ctx, t, 60, '255,236,190', 15);
-    L.pop(ctx, t, ev.title, 'يد واحدة', W / 2, 330, 230, C.goldHi, { glow: 'rgba(0,0,0,0.7)' });
+    L.pop(ctx, t, ev.title, 'يد واحدة', W / 2, 330, L.V ? 180 : 230, C.goldHi, { glow: 'rgba(0,0,0,0.7)' });
     L.pop(ctx, t, ev.title + 2 * BEAT, 'نحمي الوطن', W / 2, 460, 100, '#fff');
     L.flash(ctx, t, ev.grasp, '255,244,214', 0.5, 8); L.flash(ctx, t, ev.title, '255,244,214', 0.9, 6);
   };

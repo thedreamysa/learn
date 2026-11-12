@@ -3,7 +3,7 @@
   const U = globalThis.U, G = globalThis.G, Ch = globalThis.Ch, S = globalThis.SCORE, L = globalThis.L;
   const { clamp, lerp, ease } = U;
   const { ev, sc, BAR, BEAT } = S;
-  const W = G.W, H = G.H, C = L.C, SC = L.SCENES;
+  const W = 1920, H = 1080 /* the stage; film.js fits it to the real frame */, C = L.C, SC = L.SCENES;
 
   // ---------- 1. اليد الأولى ----------
   SC[1] = (ctx, t, u) => {
@@ -57,7 +57,7 @@
     }
     L.dust(ctx, t, 40, '255,236,190', 9);
     L.pop(ctx, t, ev.y1727, '1727', W / 2, 400, 210, C.goldHi, { glow: 'rgba(120,60,10,0.9)' });
-    L.pop(ctx, t, ev.first, 'تأسيس الدولة السعودية الأولى', W / 2, 500, 76, '#fff', { glow: 'rgba(60,30,5,0.9)' });
+    L.pop(ctx, t, ev.first, 'تأسيس الدولة السعودية الأولى', W / 2, 500, L.V ? 50 : 76, '#fff', { glow: 'rgba(60,30,5,0.9)' });
     L.flash(ctx, t, ev.y1727, '255,240,200', 0.75, 9);
   };
 
@@ -102,7 +102,7 @@
       }
       if (done) {
         L.pop(ctx, t, ev.y1932, '1932', W / 2, 500, 170, '#3A2206', { shadow: false });
-        L.pop(ctx, t, ev.y1932 + BEAT, 'المملكة العربية السعودية', W / 2, 880, 96, '#fff', { glow: 'rgba(60,30,5,0.9)' });
+        L.pop(ctx, t, ev.y1932 + BEAT, 'المملكة العربية السعودية', W / 2, 880, L.V ? 70 : 96, '#fff', { glow: 'rgba(60,30,5,0.9)' });
       }
     }
     L.dust(ctx, t, 50, '255,226,160', 12);
@@ -181,6 +181,7 @@
     if (slide > 0 && idx > 0) card(W / 2 - (1 - slide) * 1500, idx - 1, 1);
     card(cx, idx, a);
     // the kings: a gold timeline that lights up name by name (right to left)
+    if (L.V) return; // the kings are listed under the card by film.js
     const y = 846; ctx.strokeStyle = 'rgba(231,185,84,0.5)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(250, y); ctx.lineTo(W - 250, y); ctx.stroke();
     S.KINGS.forEach((k, i) => {
       const x = W - 290 - i * 335, on = t >= ev.kings[i], pop = on ? 1 + 0.5 * Math.exp(-(t - ev.kings[i]) * 9) : 1;
@@ -217,8 +218,8 @@
     // traffic: streaks of light
     for (let i = 0; i < 46; i++) { const lane = i % 4, sp = (lane < 2 ? 1 : -1) * (500 + 300 * U.hash(i, 81)), x = (((U.hash(i, 82) * 2600 + uu * sp) % 2600) + 2600) % 2600 - 300, y = 896 + lane * 18; ctx.strokeStyle = lane < 2 ? 'rgba(255,90,70,0.85)' : 'rgba(255,240,200,0.9)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - Math.sign(sp) * 130, y); ctx.stroke(); }
     ctx.restore();
-    L.pop(ctx, t, ev.vision, 'رؤية السعودية 2030', W / 2, 190, 120, C.goldHi, { glow: 'rgba(255,170,60,0.8)' });
-    L.pop(ctx, t, ev.vision + 2 * BEAT, 'أسرع قفزة في تاريخنا', W / 2, 290, 62, '#fff');
+    L.pop(ctx, t, ev.vision, 'رؤية السعودية 2030', W / 2, 190, L.V ? 80 : 120, C.goldHi, { glow: 'rgba(255,170,60,0.8)' });
+    L.pop(ctx, t, ev.vision + 2 * BEAT, 'أسرع قفزة في تاريخنا', W / 2, L.V ? 270 : 290, L.V ? 52 : 62, '#fff');
     // the cut: the picture freezes, turns cold, and the frame narrows to a phone
     if (t >= ev.cut) {
       const k = ease.inOutCubic(clamp((t - ev.cut) / (sc[5].t1 - ev.cut - 0.15)));
@@ -246,7 +247,7 @@
     if (t >= ev.ping) { // the notification
       const a = t - ev.ping, k = ease.outBack(clamp(a / 0.3), 1.6);
       for (let r = 0; r < 3; r++) { const rr = (a * 260 + r * 90) % 400; ctx.strokeStyle = `rgba(140,180,255,${0.5 * (1 - rr / 400)})`; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(880, 790, rr, 0, 7); ctx.stroke(); }
-      ctx.save(); ctx.translate(1330, 760); ctx.scale(k, k);
+      ctx.save(); ctx.translate(L.V ? 880 : 1330, L.V ? 300 : 760); ctx.scale(k, k);
       L.rr(ctx, -330, -90, 660, 180, 30, 'rgba(22,30,58,0.96)', '#5A7FE0', 4);
       ctx.fillStyle = C.red; ctx.beginPath(); ctx.arc(-272, -32, 22, 0, 7); ctx.fill(); L.tx(ctx, '1', -272, -20, 30, '#fff', { shadow: false });
       L.tx(ctx, 'رسالة جديدة', 290, -28, 40, '#9FB6F0', { align: 'right', weight: 700, shadow: false });
