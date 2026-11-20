@@ -1,588 +1,393 @@
-// EPISODE 3 · وكلاء الذكاء الاصطناعي بين الضجيج والواقع
-// Look: clean "3D icons + hand" motion graphics in the Yahya Alameer identity.
-// Every visual is a pure function of t. Layout adapts: 16:9 (landscape) and 9:16 (re-staged, not cropped).
+// EPISODE 3 · «الحاشية» — editorial premium look.
+// Near-white paper, Swiss grid (RTL), giant black Tajawal numerals, ONE living turquoise ink line
+// that circles, becomes the hype curve, strikes through, ticks, and finally signs the logo.
+// Every number carries a footnote slip with its source. Pure function of t; 16:9 and re-staged 9:16.
 (function () {
   const U = globalThis.U, G = globalThis.G, S = globalThis.SCORE, Studio = globalThis.Studio;
   const { clamp, ease } = U;
-  const W = G.W, H = G.H, P = H > W; // P = portrait
-  const C = { tq: '#00C1CA', tqD: '#00959C', tqL: '#7FE6EA', bk: '#0B0F12', bg: '#F4F8F9', wh: '#FFFFFF', gr: '#5B6770', red: '#FF5A5F', redD: '#C93E43', amb: '#FFB547' };
-  const AR = '"Tajawal", "TajawalL", "Noto Naskh Arabic", sans-serif';
+  const W = G.W, H = G.H, P = H > W;
+  const C = { tq: '#00C1CA', tqD: '#00959C', ink: '#0B0F12', paper: '#F6F5F1', rule: 'rgba(11,15,18,0.14)', gr: '#5B6770', red: '#D7383E', wh: '#FFFFFF' };
+  const AR = '"Tajawal", "TajawalL", sans-serif';
   const LA = '"Poppins", "TajawalL", sans-serif';
-  // bottom band kept free for platform buttons in 9:16
-  const FREE_BOTTOM = P ? 260 : 0;
+  const cx = W / 2;
+  const TOP = P ? 300 : 40, FOOT = P ? Math.round(H * 0.775) : H - 40;
 
   // ---------------------------------------------------------------- helpers
   const k01 = (t, a, d) => clamp((t - a) / d);
   const eo = (x) => ease.outCubic(clamp(x));
-  const eb = (x) => { x = clamp(x); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }; // outBack
-  const eio = (x) => ease.inOutCubic ? ease.inOutCubic(clamp(x)) : (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const eio = (x) => ease.inOutCubic(clamp(x));
+  const eb = (x) => { x = clamp(x); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
   const local = (t, sc) => t - S.S[sc][0];
-  const float = (t, seed, amp = 8) => Math.sin(t * 1.6 + seed) * amp;
-
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
-
-  // text: ar = Arabic RTL, align is visual ('center' | 'right' | 'left')
   function txt(ctx, s, x, y, o = {}) {
-    const { size = 48, w = 700, color = C.bk, align = 'center', fam = AR, alpha = 1, rtl = true, base = 'middle', shadow = false } = o;
+    const { size = 48, w = 700, color = C.ink, align = 'center', fam = AR, alpha = 1, rtl = true, base = 'middle' } = o;
     if (alpha <= 0) return;
-    ctx.save();
-    ctx.globalAlpha *= alpha;
-    ctx.font = `${w} ${size}px ${fam}`;
-    ctx.direction = rtl ? 'rtl' : 'ltr';
-    ctx.textAlign = align;
-    ctx.textBaseline = base;
-    if (shadow) { ctx.shadowColor = 'rgba(0,40,45,0.18)'; ctx.shadowBlur = size * 0.25; ctx.shadowOffsetY = size * 0.08; }
-    ctx.fillStyle = color;
-    ctx.fillText(s, x, y);
-    ctx.restore();
+    ctx.save(); ctx.globalAlpha *= alpha;
+    ctx.font = `${w} ${size}px ${fam}`; ctx.direction = rtl ? 'rtl' : 'ltr'; ctx.textAlign = align; ctx.textBaseline = base;
+    ctx.fillStyle = color; ctx.fillText(s, x, y); ctx.restore();
   }
-  // kinetic line: rises from a mask with a slight overshoot
+  const measure = (ctx, s, size, w = 700, fam = AR) => { ctx.save(); ctx.font = `${w} ${size}px ${fam}`; const m = ctx.measureText(s).width; ctx.restore(); return m; };
   function kline(ctx, s, x, y, t, t0, o = {}) {
-    const p = k01(t, t0, o.dur || 0.45);
-    if (p <= 0) return;
+    const p = k01(t, t0, o.dur || 0.45); if (p <= 0) return;
     const size = o.size || 48;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(0, y - size * 0.95, W, size * 1.9); ctx.clip();
-    txt(ctx, s, x, y + (1 - eb(p)) * size * 1.2, o);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, y - size * 0.95, W, size * 1.9); ctx.clip();
+    txt(ctx, s, x, y + (1 - eo(p)) * size * 1.1, o); ctx.restore();
+  }
+
+  // ---------------------------------------------------------------- paper
+  let GRAIN = null;
+  function makeGrain() {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const g = c.getContext('2d'), img = g.createImageData(256, 256), rnd = U.mulberry32(7);
+    for (let i = 0; i < img.data.length; i += 4) { const v = 128 + (rnd() - 0.5) * 70; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    g.putImageData(img, 0, 0);
+    g.globalAlpha = 0.18; g.strokeStyle = '#6b6b6b'; g.lineWidth = 0.6;
+    for (let i = 0; i < 40; i++) { const x = rnd() * 256, y = rnd() * 256, a = rnd() * 6.28, l = 6 + rnd() * 18; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * l * 0.5 + 3, y + Math.sin(a) * l * 0.5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }
+    return c;
+  }
+  function paper(ctx) {
+    ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    const v = ctx.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.3, W / 2, H * 0.45, Math.max(W, H) * 0.8);
+    v.addColorStop(0, 'rgba(255,255,255,0.35)'); v.addColorStop(1, 'rgba(120,110,95,0.10)');
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+    if (GRAIN) { ctx.save(); ctx.globalAlpha = 0.07; ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = ctx.createPattern(GRAIN, 'repeat'); ctx.fillRect(0, 0, W, H); ctx.restore(); }
+    ctx.save(); ctx.strokeStyle = 'rgba(0,149,156,0.05)'; ctx.lineWidth = 1;
+    const m = P ? 60 : 96, gw = (W - 2 * m) / 12;
+    for (let i = 0; i <= 12; i++) { ctx.beginPath(); ctx.moveTo(m + i * gw, 0); ctx.lineTo(m + i * gw, H); ctx.stroke(); }
     ctx.restore();
   }
-  // highlighted word: turquoise marker swipe behind text (RTL: grows right→left)
-  function marker(ctx, x, y, w, h, t, t0, color = C.tq) {
-    const p = eo(k01(t, t0, 0.35));
-    if (p <= 0) return;
-    ctx.save(); ctx.fillStyle = color; ctx.globalAlpha = 0.28;
-    rr(ctx, x + w * (1 - p), y - h / 2, w * p, h, h * 0.25); ctx.fill(); ctx.restore();
-  }
 
-  // ---------------------------------------------------------------- background
-  function bg(ctx, t, dark = false) {
-    // soft studio backdrop (clay look): light blue-grey, gentle vignette, faint turquoise glow
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    if (dark) { g.addColorStop(0, '#12333A'); g.addColorStop(1, '#0B0F12'); }
-    else { g.addColorStop(0, '#EEF3F6'); g.addColorStop(1, '#D9E3E8'); }
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    const g1 = ctx.createRadialGradient(W * 0.5, H * 0.42, 0, W * 0.5, H * 0.42, Math.max(W, H) * 0.7);
-    g1.addColorStop(0, dark ? 'rgba(0,193,202,0.20)' : 'rgba(255,255,255,0.75)'); g1.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
-    const g2 = ctx.createRadialGradient(W * 0.85, H * 0.12, 0, W * 0.85, H * 0.12, Math.max(W, H) * 0.45);
-    g2.addColorStop(0, 'rgba(0,193,202,0.10)'); g2.addColorStop(1, 'rgba(0,193,202,0)');
-    ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+  // ---------------------------------------------------------------- the ink line
+  function ink(ctx, pts, p, o = {}) {
+    const { w = 9, color = C.tq, nib = true } = o;
+    if (p <= 0 || pts.length < 2) return;
+    const L = [0]; for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const tot = L[L.length - 1], goal = tot * clamp(p);
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = color;
+    let hx = pts[0][0], hy = pts[0][1];
+    for (let i = 1; i < pts.length; i++) {
+      if (L[i - 1] >= goal) break;
+      const f = Math.min(1, (goal - L[i - 1]) / Math.max(1e-6, L[i] - L[i - 1]));
+      const x = pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * f, y = pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * f;
+      const u = L[i] / tot;
+      ctx.lineWidth = w * (0.72 + 0.28 * Math.sin(u * 9.4 + 1.3)) * (u < 0.04 ? 0.6 + u * 10 : 1);
+      ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(x, y); ctx.stroke();
+      hx = x; hy = y;
+    }
+    if (nib && p < 1) {
+      const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, w * 2.6);
+      g.addColorStop(0, 'rgba(0,193,202,0.55)'); g.addColorStop(1, 'rgba(0,193,202,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, w * 2.6, 0, 7); ctx.fill();
+      ctx.fillStyle = C.tqD; ctx.beginPath(); ctx.arc(hx, hy, w * 0.55, 0, 7); ctx.fill();
+    }
+    ctx.restore();
   }
+  function loopPts(x, y, rx, ry, seed = 1) {
+    const pts = [], a0 = -2.5, turns = 1.12;
+    for (let i = 0; i <= 90; i++) {
+      const a = a0 + (i / 90) * Math.PI * 2 * turns, wob = 1 + 0.03 * Math.sin(i * 0.31 + seed) + (i / 90) * 0.05;
+      pts.push([x + Math.cos(a) * rx * wob, y + Math.sin(a) * ry * wob * (1 - 0.04 * Math.cos(a * 2))]);
+    }
+    return pts;
+  }
+  const linePts = (x0, y0, x1, y1, bow = 0, n = 24) => Array.from({ length: n + 1 }, (_, i) => { const u = i / n; return [x0 + (x1 - x0) * u, y0 + (y1 - y0) * u + Math.sin(u * Math.PI) * bow]; });
+  const tickPts = (x, y, s) => [[x - s * 0.5, y], [x - s * 0.15, y + s * 0.38], [x + s * 0.55, y - s * 0.5]];
 
-  // ---------------------------------------------------------------- the logo (vector, from the brand mark)
-  // laptop with black bezel, turquoise base, open book on screen. s = width of the laptop.
-  function logoMark(ctx, x, y, s, o = {}) {
-    const { dark = false, draw = 1 } = o;
-    const bez = dark ? C.wh : C.bk;
+  // ---------------------------------------------------------------- footnotes
+  function footMark(ctx, n, x, y, t, t0, size = 40) {
+    const p = eb(k01(t, t0, 0.35)); if (p <= 0) return;
+    ctx.save(); ctx.translate(x, y); ctx.scale(p, p);
+    ctx.fillStyle = C.tq; ctx.beginPath(); ctx.arc(0, 0, size * 0.62, 0, 7); ctx.fill();
+    txt(ctx, String(n), 0, 2, { size, w: 800, fam: LA, rtl: false, color: C.wh });
+    ctx.restore();
+  }
+  function slip(ctx, n, line1, line2, x, y, t, t0, o = {}) {
+    const p = k01(t, t0, 0.45); if (p <= 0) return;
+    const fs = o.size || (P ? 26 : 24), w1 = Math.max(measure(ctx, line1, fs, 700), measure(ctx, line2, fs * 0.85, 500, LA)) + 110, h = fs * 3.2;
+    ctx.save(); ctx.globalAlpha = clamp(p * 2); ctx.translate(x, y + (1 - eb(p)) * 30); ctx.rotate(-0.015);
+    ctx.shadowColor = 'rgba(60,50,30,0.16)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+    ctx.fillStyle = C.wh; ctx.fillRect(-w1 / 2, -h / 2, w1, h); ctx.shadowColor = 'transparent';
+    ctx.fillStyle = C.tq; ctx.fillRect(w1 / 2 - 8, -h / 2, 8, h);
+    txt(ctx, String(n), w1 / 2 - 40, -h * 0.18, { size: fs * 1.1, w: 800, fam: LA, rtl: false, color: C.tq });
+    txt(ctx, line1, w1 / 2 - 70, -h * 0.18, { size: fs, w: 700, align: 'right' });
+    txt(ctx, line2, w1 / 2 - 70, h * 0.22, { size: fs * 0.85, w: 500, fam: LA, rtl: false, align: 'right', color: C.gr });
+    ctx.restore();
+  }
+  const SRC2 = 'Gartner — AI Hype Cycle, Oct 2026';
+
+  // ---------------------------------------------------------------- logo, masthead, colophon
+  function logoMark(ctx, x, y, s, draw = 1) {
     const sw = s * 0.78, sh = s * 0.5, lw = s * 0.045;
     ctx.save(); ctx.translate(x, y);
-    // screen bezel
-    ctx.lineWidth = lw; ctx.strokeStyle = bez; ctx.lineJoin = 'round';
-    rr(ctx, -sw / 2, -sh, sw, sh, s * 0.03);
-    if (draw < 1) { ctx.setLineDash([sw * 3 * draw, sw * 4]); }
-    ctx.stroke(); ctx.setLineDash([]);
-    // base
-    const bp = clamp(draw * 1.4 - 0.2);
+    const bz = clamp(draw * 1.6);
+    if (bz > 0) {
+      const per = 2 * (sw + sh);
+      ctx.lineWidth = lw; ctx.strokeStyle = C.ink; ctx.lineJoin = 'round';
+      ctx.setLineDash([per * bz, per]); rr(ctx, -sw / 2, -sh, sw, sh, s * 0.03); ctx.stroke(); ctx.setLineDash([]);
+    }
+    const bp = eo(clamp(draw * 2.2 - 0.9));
     if (bp > 0) {
-      ctx.fillStyle = C.tq;
-      ctx.beginPath();
+      ctx.fillStyle = C.tq; ctx.beginPath();
       ctx.moveTo(-s / 2 * bp, -s * 0.02); ctx.lineTo(s / 2 * bp, -s * 0.02);
       ctx.quadraticCurveTo(s / 2 * bp, s * 0.07, s * 0.44 * bp, s * 0.07); ctx.lineTo(-s * 0.44 * bp, s * 0.07);
       ctx.quadraticCurveTo(-s / 2 * bp, s * 0.07, -s / 2 * bp, -s * 0.02); ctx.closePath(); ctx.fill();
     }
-    // open book
-    const bk = eb(clamp(draw * 1.6 - 0.6));
+    const bk = eb(clamp(draw * 2.2 - 1.2));
     if (bk > 0) {
       ctx.save(); ctx.translate(0, -sh * 0.5); ctx.scale(bk, bk);
       const bw = sw * 0.22, bh = sh * 0.62;
-      ctx.fillStyle = bez; // back shadow pages
-      ctx.fillRect(-bw - s * 0.012, -bh / 2 + s * 0.02, s * 0.012, bh); ctx.fillRect(bw, -bh / 2 + s * 0.02, s * 0.012, bh);
-      ctx.fillRect(-bw, bh / 2 - s * 0.006, bw * 2, s * 0.018);
+      ctx.fillStyle = C.ink;
+      ctx.fillRect(-bw - s * 0.012, -bh / 2 + s * 0.02, s * 0.012, bh); ctx.fillRect(bw, -bh / 2 + s * 0.02, s * 0.012, bh); ctx.fillRect(-bw, bh / 2 - s * 0.006, bw * 2, s * 0.018);
       ctx.fillStyle = C.tq;
-      ctx.beginPath(); ctx.moveTo(-s * 0.006, -bh / 2 + s * 0.02); ctx.quadraticCurveTo(-bw * 0.5, -bh / 2 - s * 0.01, -bw, -bh / 2 + s * 0.005); ctx.lineTo(-bw, bh / 2 - s * 0.01); ctx.quadraticCurveTo(-bw * 0.5, bh / 2 - s * 0.03, -s * 0.006, bh / 2); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(s * 0.006, -bh / 2 + s * 0.02); ctx.quadraticCurveTo(bw * 0.5, -bh / 2 - s * 0.01, bw, -bh / 2 + s * 0.005); ctx.lineTo(bw, bh / 2 - s * 0.01); ctx.quadraticCurveTo(bw * 0.5, bh / 2 - s * 0.03, s * 0.006, bh / 2); ctx.closePath(); ctx.fill();
+      for (const sg of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sg * s * 0.006, -bh / 2 + s * 0.02); ctx.quadraticCurveTo(sg * bw * 0.5, -bh / 2 - s * 0.01, sg * bw, -bh / 2 + s * 0.005); ctx.lineTo(sg * bw, bh / 2 - s * 0.01); ctx.quadraticCurveTo(sg * bw * 0.5, bh / 2 - s * 0.03, sg * s * 0.006, bh / 2); ctx.closePath(); ctx.fill(); }
       ctx.restore();
     }
     ctx.restore();
   }
-  function logoFull(ctx, x, y, s, o = {}) {
-    const { dark = false, alpha = 1, draw = 1 } = o;
-    ctx.save(); ctx.globalAlpha *= alpha;
-    logoMark(ctx, x, y, s, { dark, draw });
-    const ta = clamp(draw * 2 - 1);
-    txt(ctx, 'YAHYA ALAMEER', x, y + s * 0.28, { size: s * 0.155, w: 700, fam: LA, rtl: false, color: dark ? C.wh : C.bk, alpha: ta });
-    txt(ctx, 'INSTRUCTIONAL DESIGN', x, y + s * 0.44, { size: s * 0.072, w: 500, fam: LA, rtl: false, color: dark ? '#C9D3D8' : C.bk, alpha: ta });
+  function masthead(ctx) {
+    const m = P ? 60 : 96, y = TOP + 34;
+    logoMark(ctx, W - m - 40, y + 8, 76);
+    txt(ctx, 'تقرير في دقائق', W - m - 96, y - 6, { size: P ? 30 : 26, w: 800, align: 'right' });
+    txt(ctx, 'العدد 3 · تقنيات التعليم والذكاء الاصطناعي', W - m - 96, y + 26, { size: P ? 21 : 18, w: 500, align: 'right', color: C.gr });
+    txt(ctx, 'Gartner · Oct 2026', m, y + 10, { size: P ? 22 : 19, w: 600, fam: LA, rtl: false, align: 'left', color: C.gr });
+    ctx.fillStyle = C.ink; ctx.fillRect(m, y + 54, W - 2 * m, 2.5); ctx.fillRect(m, y + 60, W - 2 * m, 0.8);
+  }
+  function colophon(ctx, t) {
+    const m = P ? 60 : 96, y = FOOT - (P ? 40 : 34);
+    ctx.fillStyle = C.ink; ctx.fillRect(m, y - 34, W - 2 * m, 1.2);
+    const ns = P ? 32 : 28;
+    txt(ctx, 'د. يحيى الأمير', W - m, y, { size: ns, w: 800, align: 'right' });
+    const per = 3.5, i = Math.floor(t / per) % S.HANDLES.length, ph = (t % per) / per, roll = ph < 0.08 ? 1 - eo(ph / 0.08) : 0;
+    const hx = W - m - measure(ctx, 'د. يحيى الأمير', ns, 800) - 30;
+    ctx.save(); ctx.beginPath(); ctx.rect(m, y - 24, hx - m, 48); ctx.clip();
+    txt(ctx, S.HANDLES[i], hx, y + 2 + roll * 40, { size: P ? 24 : 22, w: 600, fam: LA, rtl: false, align: 'right', color: C.tqD });
     ctx.restore();
-  }
-
-  // ---------------------------------------------------------------- 3D icons
-  // an extruded, glossy rounded tile with a white glyph. pop = 0..1 entrance.
-  // Canva-rendered clay button (keyed). Colour variants are tinted from the turquoise original.
-  const BTN = { img: null, red: null, black: null, capX: 0.5, capY: 0.43, capW: 0.8, scale: 1.12 };
-  function icon3dImg(ctx, kind, x, y, s, o) {
-    const { pop = 1, tilt = 0, color = C.tq, glyph = C.wh, press = 0 } = o;
-    const im = color === C.red ? BTN.red : color === C.bk ? BTN.black : BTN.img;
-    const sc = eb(pop), w = s * BTN.scale, h = w * im.height / im.width;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(tilt); ctx.scale(sc, sc);
-    ctx.save(); ctx.globalAlpha = 0.2; ctx.fillStyle = '#3A5560'; ctx.filter = `blur(${Math.max(3, s * 0.08)}px)`;
-    ctx.beginPath(); ctx.ellipse(0, h * 0.42, w * 0.38, s * 0.09, 0, 0, 7); ctx.fill(); ctx.restore();
-    ctx.translate(0, press * s * 0.03); ctx.scale(1, 1 - press * 0.04);
-    ctx.drawImage(im, -w / 2, -h / 2, w, h);
-    const gx = (BTN.capX - 0.5) * w, gy = (BTN.capY - 0.5) * h;
-    ctx.translate(gx, gy);
-    ctx.save(); ctx.shadowColor = 'rgba(0,50,55,0.28)'; ctx.shadowBlur = s * 0.03; ctx.shadowOffsetY = s * 0.022;
-    drawGlyph(ctx, kind, w * BTN.capW * 0.5, glyph, o);
-    ctx.restore();
-    ctx.restore();
-  }
-  function icon3d(ctx, kind, x, y, s, o = {}) {
-    // clay pillow button: white base slab + domed coloured cap that sinks when pressed
-    const { pop = 1, tilt = 0, color = C.tq, dark = C.tqD, glyph = C.wh, press = 0 } = o;
-    if (pop <= 0) return;
-    if (BTN.img) return icon3dImg(ctx, kind, x, y, s, o);
-    const sc = eb(pop);
-    ctx.save(); ctx.translate(x, y); ctx.rotate(tilt); ctx.scale(sc, sc);
-    const r = s * 0.26, bw = s * 1.08, bh = s * 1.08, by = s * 0.08;
-    // contact shadow
-    ctx.save(); ctx.globalAlpha = 0.22; ctx.fillStyle = '#3A5560'; ctx.filter = `blur(${Math.max(3, s * 0.07)}px)`;
-    ctx.beginPath(); ctx.ellipse(s * 0.04, s * 0.66, s * 0.56, s * 0.1, 0, 0, 7); ctx.fill(); ctx.restore();
-    // white base: side then top
-    ctx.fillStyle = '#C9D4DA'; rr(ctx, -bw / 2, -bh / 2 + by + s * 0.1, bw, bh, r * 1.1); ctx.fill();
-    const gb = ctx.createLinearGradient(0, -bh / 2, 0, bh / 2);
-    gb.addColorStop(0, '#FFFFFF'); gb.addColorStop(1, '#E7EEF1');
-    ctx.fillStyle = gb; rr(ctx, -bw / 2, -bh / 2 + by, bw, bh, r * 1.1); ctx.fill();
-    // cap: side (extrusion) shrinks when pressed
-    const ext = s * 0.13 * (1 - press * 0.75), cs = s * 0.86, cy0 = -cs / 2 + by - ext + s * 0.02;
-    ctx.fillStyle = dark; rr(ctx, -cs / 2, cy0 + ext, cs, cs, r); ctx.fill();
-    // cap top with soft dome shading
-    const gc = ctx.createRadialGradient(-cs * 0.2, cy0 + cs * 0.15, cs * 0.05, 0, cy0 + cs * 0.55, cs * 0.85);
-    gc.addColorStop(0, shade(color, 0.3)); gc.addColorStop(0.6, color); gc.addColorStop(1, shade(dark, 0.1));
-    ctx.fillStyle = gc; rr(ctx, -cs / 2, cy0, cs, cs, r); ctx.fill();
-    // soft inner glow (matte clay, no hard gloss)
-    ctx.save(); rr(ctx, -cs / 2, cy0, cs, cs, r); ctx.clip();
-    const ig = ctx.createRadialGradient(-cs * 0.18, cy0 + cs * 0.2, 0, -cs * 0.18, cy0 + cs * 0.2, cs * 0.6);
-    ig.addColorStop(0, 'rgba(255,255,255,0.22)'); ig.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = ig; ctx.fillRect(-cs / 2, cy0, cs, cs);
-    ctx.restore();
-    // embossed glyph
-    ctx.save(); ctx.translate(0, cy0 + cs / 2);
-    ctx.shadowColor = 'rgba(0,50,55,0.35)'; ctx.shadowBlur = s * 0.03; ctx.shadowOffsetY = s * 0.025;
-    drawGlyph(ctx, kind, cs * 0.62, glyph, o);
-    ctx.restore();
-    ctx.restore();
-  }
-  function clayButton(ctx, label, x, y, w, h, o = {}) {
-    const { pop = 1, press = 0, color = C.tq, dark = C.tqD } = o;
-    if (pop <= 0) return;
-    const sc = eb(pop);
-    ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
-    const r = h * 0.38, pad = h * 0.14, ext = h * 0.16 * (1 - press * 0.75);
-    ctx.save(); ctx.globalAlpha = 0.22; ctx.fillStyle = '#3A5560'; ctx.filter = 'blur(10px)';
-    ctx.beginPath(); ctx.ellipse(0, h * 0.75, w * 0.55, h * 0.16, 0, 0, 7); ctx.fill(); ctx.restore();
-    ctx.fillStyle = '#C9D4DA'; rr(ctx, -w / 2 - pad, -h / 2 - pad + h * 0.12, w + 2 * pad, h + 2 * pad, r + pad); ctx.fill();
-    const gb = ctx.createLinearGradient(0, -h, 0, h); gb.addColorStop(0, '#FFFFFF'); gb.addColorStop(1, '#E7EEF1');
-    ctx.fillStyle = gb; rr(ctx, -w / 2 - pad, -h / 2 - pad, w + 2 * pad, h + 2 * pad, r + pad); ctx.fill();
-    ctx.fillStyle = dark; rr(ctx, -w / 2, -h / 2, w, h, r); ctx.fill();
-    const top = -h / 2 - ext;
-    const gc = ctx.createLinearGradient(0, top, 0, top + h); gc.addColorStop(0, shade(color, 0.4)); gc.addColorStop(1, color);
-    ctx.fillStyle = gc; rr(ctx, -w / 2, top, w, h, r); ctx.fill();
-        ctx.save(); ctx.shadowColor = 'rgba(0,50,55,0.35)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 3;
-    txt(ctx, label, 0, top + h / 2 + 3, { size: h * 0.46, w: 800, color: C.wh }); ctx.restore();
-    ctx.restore();
-  }
-  function shade(hex, amt) { // lighten (amt>0) toward white
-    const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
-    r = Math.round(r + (255 - r) * amt); g = Math.round(g + (255 - g) * amt); b = Math.round(b + (255 - b) * amt);
-    return `rgb(${r},${g},${b})`;
-  }
-  function drawGlyph(ctx, kind, s, col, o) {
-    ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = s * 0.1;
-    const h = s / 2;
-    switch (kind) {
-      case 'agent': { // robot head
-        rr(ctx, -h * 0.85, -h * 0.55, h * 1.7, h * 1.3, h * 0.35); ctx.fill();
-        ctx.fillRect(-h * 0.06, -h * 0.95, h * 0.12, h * 0.4); ctx.beginPath(); ctx.arc(0, -h * 0.98, h * 0.15, 0, 7); ctx.fill();
-        ctx.fillStyle = o.color || C.tq; ctx.beginPath(); ctx.arc(-h * 0.36, h * 0.05, h * 0.17, 0, 7); ctx.arc(h * 0.36, h * 0.05, h * 0.17, 0, 7); ctx.fill();
-        rr(ctx, -h * 0.3, h * 0.38, h * 0.6, h * 0.1, h * 0.05); ctx.fill();
-        ctx.fillStyle = col; ctx.fillRect(-h * 1.05, -h * 0.15, h * 0.2, h * 0.5); ctx.fillRect(h * 0.85, -h * 0.15, h * 0.2, h * 0.5);
-        break;
-      }
-      case 'chart': {
-        ctx.beginPath(); ctx.moveTo(-h, h * 0.9); ctx.lineTo(h, h * 0.9); ctx.stroke();
-        [[-0.7, 0.5], [-0.2, 0.9], [0.3, 1.3], [0.78, 1.7]].forEach(([bx, bh]) => { rr(ctx, h * bx - h * 0.17, h * 0.75 - h * bh, h * 0.34, h * bh, h * 0.08); ctx.fill(); });
-        break;
-      }
-      case 'x': { ctx.lineWidth = s * 0.16; ctx.beginPath(); ctx.moveTo(-h * 0.6, -h * 0.6); ctx.lineTo(h * 0.6, h * 0.6); ctx.moveTo(h * 0.6, -h * 0.6); ctx.lineTo(-h * 0.6, h * 0.6); ctx.stroke(); break; }
-      case 'check': { ctx.lineWidth = s * 0.16; ctx.beginPath(); ctx.moveTo(-h * 0.7, 0); ctx.lineTo(-h * 0.2, h * 0.5); ctx.lineTo(h * 0.75, -h * 0.55); ctx.stroke(); break; }
-      case 'shield': {
-        ctx.beginPath(); ctx.moveTo(0, -h); ctx.quadraticCurveTo(h * 0.5, -h * 0.7, h * 0.9, -h * 0.7); ctx.quadraticCurveTo(h * 0.95, h * 0.5, 0, h); ctx.quadraticCurveTo(-h * 0.95, h * 0.5, -h * 0.9, -h * 0.7); ctx.quadraticCurveTo(-h * 0.5, -h * 0.7, 0, -h); ctx.fill();
-        ctx.strokeStyle = o.color || C.tq; ctx.lineWidth = s * 0.11; ctx.beginPath(); ctx.moveTo(-h * 0.38, 0); ctx.lineTo(-h * 0.08, h * 0.3); ctx.lineTo(h * 0.42, -h * 0.3); ctx.stroke();
-        break;
-      }
-      case 'building': {
-        ctx.fillRect(-h * 0.75, -h * 0.6, h * 1.5, h * 1.5); ctx.beginPath(); ctx.moveTo(-h * 0.95, -h * 0.55); ctx.lineTo(0, -h * 1.05); ctx.lineTo(h * 0.95, -h * 0.55); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = o.color || C.tq; for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) ctx.fillRect(-h * 0.5 + i * h * 0.38, -h * 0.3 + j * h * 0.5, h * 0.22, h * 0.3);
-        break;
-      }
-      case 'scale': { // balance = accountability
-        ctx.fillRect(-h * 0.06, -h * 0.8, h * 0.12, h * 1.6); ctx.fillRect(-h * 0.5, h * 0.75, h, h * 0.15);
-        ctx.beginPath(); ctx.moveTo(-h * 0.9, -h * 0.55); ctx.lineTo(h * 0.9, -h * 0.55); ctx.stroke();
-        ctx.beginPath(); ctx.arc(-h * 0.7, -h * 0.05, h * 0.32, 0, Math.PI); ctx.fill(); ctx.beginPath(); ctx.arc(h * 0.7, -h * 0.05, h * 0.32, 0, Math.PI); ctx.fill();
-        ctx.lineWidth = s * 0.04; ctx.beginPath(); ctx.moveTo(-h * 0.7, -h * 0.55); ctx.lineTo(-h * 0.98, -h * 0.05); ctx.moveTo(-h * 0.7, -h * 0.55); ctx.lineTo(-h * 0.42, -h * 0.05); ctx.moveTo(h * 0.7, -h * 0.55); ctx.lineTo(h * 0.42, -h * 0.05); ctx.moveTo(h * 0.7, -h * 0.55); ctx.lineTo(h * 0.98, -h * 0.05); ctx.stroke();
-        break;
-      }
-      case 'rocket': {
-        ctx.beginPath(); ctx.moveTo(0, -h); ctx.quadraticCurveTo(h * 0.55, -h * 0.4, h * 0.35, h * 0.45); ctx.lineTo(-h * 0.35, h * 0.45); ctx.quadraticCurveTo(-h * 0.55, -h * 0.4, 0, -h); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-h * 0.35, h * 0.1); ctx.lineTo(-h * 0.7, h * 0.6); ctx.lineTo(-h * 0.3, h * 0.45); ctx.fill(); ctx.beginPath(); ctx.moveTo(h * 0.35, h * 0.1); ctx.lineTo(h * 0.7, h * 0.6); ctx.lineTo(h * 0.3, h * 0.45); ctx.fill();
-        ctx.fillStyle = o.color || C.tq; ctx.beginPath(); ctx.arc(0, -h * 0.3, h * 0.17, 0, 7); ctx.fill();
-        ctx.fillStyle = C.amb; ctx.beginPath(); ctx.moveTo(-h * 0.2, h * 0.5); ctx.quadraticCurveTo(0, h * 1.1, h * 0.2, h * 0.5); ctx.fill();
-        break;
-      }
-      case 'calendar': {
-        rr(ctx, -h * 0.85, -h * 0.65, h * 1.7, h * 1.5, h * 0.2); ctx.fill();
-        ctx.fillStyle = o.color || C.tq; ctx.fillRect(-h * 0.85, -h * 0.25, h * 1.7, h * 0.08);
-        for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) { ctx.beginPath(); ctx.arc(-h * 0.5 + i * h * 0.33, h * 0.12 + j * h * 0.35, h * 0.08, 0, 7); ctx.fill(); }
-        ctx.fillStyle = col; ctx.fillRect(-h * 0.5, -h * 0.9, h * 0.13, h * 0.4); ctx.fillRect(h * 0.37, -h * 0.9, h * 0.13, h * 0.4);
-        break;
-      }
-    }
-  }
-  // glossy 3D sphere (decor)
-  function orb(ctx, x, y, r, color = C.tq, a = 1) {
-    ctx.save(); ctx.globalAlpha *= a;
-    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
-    g.addColorStop(0, shade(color, 0.7)); g.addColorStop(0.55, color); g.addColorStop(1, shade('#004E52', 0));
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.restore();
-  }
-
-  // ---------------------------------------------------------------- the hand
-  // soft clay 3D hand (no outlines). Index finger along -y; (x,y) = fingertip.
-  const SKIN = { hi: '#FFE6D8', mid: '#F6C3A6', lo: '#DE9A79', ao: 'rgba(150,80,50,0.35)' };
-  // 3D-rendered hand (Canva render, background keyed). (x,y) = fingertip; ang as before
-  // (finger along -y rotated by ang), so the finger points along dir = ang - 90°.
-  const HAND = { point: { img: null, tipX: 1837, tipY: 49, a0: -0.5, k: 3.6 }, press: { img: null, tipX: 1407, tipY: 1787, a0: 1.42, k: 2.9 } };
-  function hand(ctx, x, y, s, o = {}) {
-    const { ang = 0, press = 0, alpha = 1 } = o;
-    const dir0 = ang - Math.PI / 2, P0 = Math.sin(dir0) > 0.75 && HAND.press.img ? HAND.press : HAND.point;
-    const im = P0.img; if (!im || alpha <= 0) return;
-    const dir = dir0, k = (s * P0.k) / im.width, w = im.width * k, h = im.height * k;
-    ctx.save(); ctx.globalAlpha *= alpha;
-    ctx.translate(x + Math.cos(dir) * press * 14, y + Math.sin(dir) * press * 14);
-    const mirror = Math.cos(dir) < 0;
-    if (mirror) { ctx.rotate(dir - (Math.PI - P0.a0)); ctx.scale(-1, 1); } else ctx.rotate(dir - P0.a0);
-    const ox = -P0.tipX * k, oy = -P0.tipY * k, L = 4000;
-    ctx.shadowColor = 'rgba(30,60,70,0.28)'; ctx.shadowBlur = s * 0.28; ctx.shadowOffsetY = s * 0.16;
-    ctx.drawImage(im, 0, 0, 40, im.height, ox - L, oy, L + 4, h); // sleeve continues off-frame
-    ctx.drawImage(im, ox, oy, w, h);
-    ctx.restore();
-  }
-  // a tap ripple at (x,y) started at t0
-  function ripple(ctx, x, y, t, t0, r = 60) {
-    const p = k01(t, t0, 0.6); if (p <= 0.04 || p >= 1) return;
-    ctx.save(); ctx.strokeStyle = C.tq; ctx.globalAlpha = 1 - p; ctx.lineWidth = 6 * (1 - p) + 1;
-    ctx.beginPath(); ctx.arc(x, y, r * eo(p), 0, 7); ctx.stroke();
-    ctx.globalAlpha = (1 - p) * 0.5; ctx.beginPath(); ctx.arc(x, y, r * 0.55 * eo(p), 0, 7); ctx.stroke(); ctx.restore();
-  }
-  // hand path helper: moves along keyframes [[t, x, y, ang, press]]
-  function handAt(keys, t) {
-    if (t <= keys[0][0]) return keys[0];
-    for (let i = 1; i < keys.length; i++) {
-      const a = keys[i - 1], b = keys[i];
-      if (t <= b[0]) { const p = eio((t - a[0]) / (b[0] - a[0])); return a.map((v, j) => (j === 0 ? t : v + (b[j] - v) * p)); }
-    }
-    return keys[keys.length - 1];
-  }
-
-  // ---------------------------------------------------------------- persistent chrome
-  function chrome(ctx, t, o = {}) {
-    const dark = !!o.dark;
-    // top: logo mark + series tag (right side in RTL), source badge (left)
-    const m = P ? 60 : 56, top = P ? 300 : 52;
-    logoMark(ctx, W - m - 46, top + 28, 92, { dark });
-    txt(ctx, 'تقرير في دقائق · 3', W - m - 110, top + 6, { size: P ? 30 : 26, w: 800, align: 'right', color: dark ? C.wh : C.bk });
-    txt(ctx, 'تقنيات التعليم والذكاء الاصطناعي', W - m - 110, top + 40, { size: P ? 22 : 19, w: 500, align: 'right', color: dark ? '#9FB0B8' : C.gr });
-    // source pill
-    const sp = 'المصدر: ' + S.SOURCE.ar;
-    ctx.save(); ctx.font = `700 ${P ? 24 : 22}px ${AR}`; const sw = ctx.measureText(sp).width + 64; ctx.restore();
-    const sx = P ? (W - sw) / 2 : m, sy = P ? top + 80 : top - 4;
-    ctx.fillStyle = dark ? 'rgba(255,255,255,0.08)' : C.wh; rr(ctx, sx, sy, sw, 46, 23); ctx.fill();
-    ctx.strokeStyle = dark ? 'rgba(255,255,255,0.15)' : 'rgba(11,15,18,0.08)'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = C.tq; ctx.beginPath(); ctx.arc(sx + sw - 24, sy + 23, 7, 0, 7); ctx.fill();
-    txt(ctx, sp, sx + sw - 42, sy + 24, { size: P ? 24 : 22, w: 700, align: 'right', color: dark ? '#DDE6EA' : C.bk });
-    // bottom name bar
-    const bh = P ? 84 : 72, by = P ? Math.round(H * 0.775) - bh : H - bh - 34, bw = P ? W - 120 : 760, bx = P ? 60 : W - m - bw;
-    ctx.save(); ctx.shadowColor = 'rgba(0,40,45,0.18)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
-    ctx.fillStyle = C.bk; rr(ctx, bx, by, bw, bh, bh / 2); ctx.fill(); ctx.restore();
-    ctx.fillStyle = C.tq; rr(ctx, bx + bw - 250, by, 250, bh, bh / 2); ctx.fill();
-    txt(ctx, 'د. يحيى الأمير', bx + bw - 125, by + bh / 2 + 2, { size: P ? 34 : 30, w: 800, color: C.bk });
-    // rotating handle (changes every 3.5 s with a vertical roll)
-    const per = 3.5, i = Math.floor(t / per) % S.HANDLES.length, ph = (t % per) / per;
-    const roll = ph < 0.08 ? 1 - eo(ph / 0.08) : 0;
-    ctx.save(); rr(ctx, bx + 24, by, bw - 290, bh, bh / 2); ctx.clip();
-    txt(ctx, S.HANDLES[i], bx + 24 + (bw - 290) / 2, by + bh / 2 + 2 + roll * bh, { size: P ? 28 : 26, w: 600, fam: LA, rtl: false, color: C.wh });
-    ctx.restore();
+    txt(ctx, 'المصدر: ' + S.SOURCE.ar, m, y, { size: P ? 22 : 20, w: 600, align: 'left', color: C.gr });
   }
 
   // ---------------------------------------------------------------- scenes
-  const cx = W / 2;
-
-  // 1 · HOOK — the big number, the agent icon pops, the hand taps it
+  // 1 · HOOK — «؟٪» guess beat, then the number wipes in, ink circles it, footnote drops
   function hook(ctx, t) {
     const l = t;
-    bg(ctx, t);
-    const cy = P ? H * 0.5 : H * 0.47;
-    // floating decor
-    // agent icon on the side (top in portrait)
-    const ix = P ? cx : W * 0.72, iy = P ? cy - 300 : cy - 10, is = P ? 230 : 300;
-    icon3d(ctx, 'agent', ix, iy + float(t, 0, 6), is, { pop: k01(l, 0.15, 0.55), tilt: -0.06 });
-    // counter 0 → N
-    const N = S.FACTS.deployed, cp = eo(k01(l, 0.6, 1.3)), v = Math.round(N * cp);
-    const nx = P ? cx : W * 0.36, ny = P ? cy + 30 : cy - 60;
-    if (l > 0.5) {
-      const pulse = 1 + 0.06 * Math.max(0, 1 - Math.abs(l - 1.9) / 0.15);
-      ctx.save(); ctx.translate(nx, ny); ctx.scale(pulse, pulse);
-      txt(ctx, `${v}%`, 0, 0, { size: P ? 300 : 280, w: 800, fam: LA, rtl: false, color: C.bk, shadow: true });
-      ctx.restore();
-    }
-    kline(ctx, 'فقط من المؤسسات', nx, ny + (P ? 190 : 175), l, 1.6, { size: P ? 64 : 58, w: 800 });
-    kline(ctx, 'نشرت وكلاء ذكاء اصطناعي فعلاً', nx, ny + (P ? 275 : 255), l, 1.85, { size: P ? 50 : 46, w: 500, color: C.gr });
-    marker(ctx, nx - (P ? 230 : 210), ny + (P ? 190 : 175), P ? 460 : 420, P ? 62 : 56, l, 2.2);
-    // the hand comes in and taps the number
-    const tx0 = nx + (P ? 200 : 210), ty0 = ny - (P ? 70 : 60);
-    const hk = handAt([[0.6, W + 300, -400, -2.4, 0], [1.7, tx0, ty0, -2.4, 0], [1.85, tx0 - 8, ty0 + 8, -2.4, 1], [2.05, tx0, ty0, -2.4, 0], [2.5, tx0 + 10, ty0 - 10, -2.4, 0], [3.3, W + 300, -400, -2.4, 0]], l);
-    ripple(ctx, tx0, ty0, l, 1.85, 90);
-    hand(ctx, hk[1], hk[2], P ? 170 : 160, { ang: hk[3], press: hk[4] });
-    chrome(ctx, t);
+    paper(ctx); masthead(ctx);
+    const ny = P ? H * 0.43 : H * 0.44, size = P ? 380 : 340;
+    kline(ctx, 'كم مؤسسة نشرت وكلاء ذكاء اصطناعي فعلاً؟', cx, ny - size * 0.75, l, 0.05, { size: P ? 42 : 40, w: 700, color: C.gr });
+    const rv = eio(k01(l, 1.3, 0.35));
+    ctx.save(); ctx.beginPath(); ctx.rect(0, ny - size * 0.6, W, size * 1.2 * (1 - rv)); ctx.clip();
+    txt(ctx, '؟٪', cx, ny, { size, w: 800, color: 'rgba(11,15,18,0.16)' }); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(0, ny + size * 0.6 - size * 1.2 * rv, W, size * 1.2 * rv); ctx.clip();
+    txt(ctx, `${S.FACTS.deployed}%`, cx, ny, { size, w: 800, rtl: false }); ctx.restore();
+    const nw = measure(ctx, `${S.FACTS.deployed}%`, size, 800);
+    ink(ctx, loopPts(cx, ny + size * 0.04, nw * 0.68, size * 0.52, 2), eio(k01(l, 1.7, 0.75)), { w: P ? 11 : 10 });
+    footMark(ctx, 1, cx - nw * 0.62, ny - size * 0.38, l, 2.35, P ? 34 : 30);
+    kline(ctx, 'فقط من المؤسسات نشرت وكلاء ذكاء اصطناعي', cx, ny + size * 0.8, l, 2.0, { size: P ? 50 : 50, w: 800 });
+    slip(ctx, 1, 'جارتنر · أكتوبر 2026', SRC2, P ? cx : W * 0.17, P ? ny + size * 1.15 : ny + size * 0.45, l, 2.6);
+    colophon(ctx, t);
   }
 
-  // 2 · TITLE — the logo builds, the episode title types in, icons orbit
+  // 2 · TITLE — magazine cover: issue number, headline, ink underline, byline + logo signed in ink
   function title(ctx, t) {
     const l = local(t, 'title');
-    bg(ctx, t);
-    const cy = P ? H * 0.38 : H * 0.36;
-    logoFull(ctx, cx, cy, P ? 320 : 300, { draw: k01(l, 0, 1.2) });
-    // orbiting icons
-    const kinds = ['agent', 'chart', 'rocket', 'shield'];
-    const spots = P ? [[-340, -170], [340, -150], [-330, 130], [340, 150]] : [[-470, -150], [470, -130], [-520, 110], [520, 120]];
-    kinds.forEach((kd, i) => {
-      const [dx, dy] = spots[i];
-      icon3d(ctx, kd, cx + dx, cy - 40 + dy + float(t, i * 1.7, 10), (P ? 110 : 120) * (i % 2 ? 0.85 : 1), { pop: k01(l, 0.6 + i * 0.12, 0.5), tilt: (i % 2 ? 0.08 : -0.08) });
-    });
-    const ty = P ? H * 0.58 : H * 0.655;
-    kline(ctx, 'وكلاء الذكاء الاصطناعي', cx, ty, l, 1.2, { size: P ? 92 : 96, w: 800, color: C.bk });
-    kline(ctx, 'بين الضجيج والواقع', cx, ty + (P ? 120 : 115), l, 1.5, { size: P ? 80 : 80, w: 800, color: C.tq });
-    kline(ctx, 'AI Agents: Hype vs. Reality', cx, ty + (P ? 210 : 195), l, 1.8, { size: P ? 36 : 34, w: 500, fam: LA, rtl: false, color: C.gr });
-    chrome(ctx, t);
+    paper(ctx);
+    const m = P ? 60 : 96;
+    txt(ctx, '03', P ? m : m, P ? TOP + 130 : H * 0.3, { size: P ? 240 : 320, w: 700, fam: LA, rtl: false, align: 'left', color: 'rgba(0,193,202,0.16)', alpha: k01(l, 0, 0.6) });
+    const x = W - m, y0 = P ? H * 0.42 : H * 0.38, hs = P ? 92 : 110;
+    kline(ctx, 'تقرير في دقائق · العدد 3', x, y0 - (P ? 125 : 120), l, 0.1, { size: P ? 32 : 30, w: 700, align: 'right', color: C.tqD });
+    kline(ctx, 'وكلاء الذكاء الاصطناعي', x, y0, l, 0.3, { size: hs, w: 800, align: 'right' });
+    kline(ctx, 'بين الضجيج والواقع', x, y0 + hs * 1.25, l, 0.55, { size: hs, w: 800, align: 'right' });
+    const uw = measure(ctx, 'الضجيج والواقع', hs, 800), sx = x - measure(ctx, 'بين ', hs, 800);
+    ink(ctx, linePts(sx, y0 + hs * 1.25 + hs * 0.62, sx - uw, y0 + hs * 1.25 + hs * 0.66, 6), eio(k01(l, 1.1, 0.7)), { w: 10 });
+    kline(ctx, 'قراءة في تقرير جارتنر لدورة الضجيج — أكتوبر 2026', x, y0 + hs * 2.75, l, 1.5, { size: 32, w: 500, align: 'right', color: C.gr });
+    const by = P ? FOOT - 120 : H * 0.85;
+    logoMark(ctx, x - 50, by, 100, k01(l, 1.9, 1.2));
+    txt(ctx, 'بقلم د. يحيى الأمير', x - 120, by - 18, { size: P ? 34 : 32, w: 800, align: 'right', alpha: k01(l, 2.4, 0.5) });
+    txt(ctx, 'YAHYA ALAMEER · INSTRUCTIONAL DESIGN', x - 120, by + 22, { size: P ? 20 : 18, w: 600, fam: LA, rtl: false, align: 'right', color: C.gr, alpha: k01(l, 2.6, 0.5) });
   }
 
-  // 3 · CURVE — the hype curve draws itself; a glowing dot rides it; the hand points at the phases
+  // 3 · CURVE — the ink line becomes the hype curve (time flows right → left); phases typeset in
   function curve(ctx, t) {
     const l = local(t, 'curve');
-    bg(ctx, t);
-    const x0 = P ? 90 : 230, x1 = P ? W - 90 : W - 230, yb = P ? H * 0.69 : H * 0.78, hgt = P ? 570 : 470;
-    // generic hype-cycle shape (normalised)
-    const f = (u) => { // u 0..1 → height 0..1: rise → peak → smooth trough → slope → plateau
-      const peak = Math.exp(-Math.pow((u - 0.22) / 0.085, 2));
-      const slope = 1 / (1 + Math.exp(-(u - 0.64) / 0.09));
-      return 0.9 * peak + 0.05 + 0.5 * slope;
-    };
-    const pt = (u) => [x1 - (x1 - x0) * u, yb - f(u) * hgt]; // RTL: time flows right → left
-    // axes
-    ctx.strokeStyle = 'rgba(11,15,18,0.18)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(x1, yb - hgt - 30); ctx.lineTo(x1, yb); ctx.lineTo(x0 - 10, yb); ctx.stroke();
-    txt(ctx, 'التوقعات', x1 + (P ? -10 : 30), yb - hgt - (P ? 10 : 50), { size: 28, w: 700, color: C.gr, align: P ? 'right' : 'center' });
-    txt(ctx, 'الزمن', x0 + 20, yb + 36, { size: 28, w: 700, color: C.gr, align: 'left' });
-    // the curve draws
-    const dp = eio(k01(l, 0.3, 2.2));
-    if (dp > 0) {
-      ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      const N = 160, path = () => { ctx.beginPath(); for (let i = 0; i <= N * dp; i++) { const [x, y] = pt(i / N); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } };
-      ctx.strokeStyle = 'rgba(0,193,202,0.22)'; ctx.lineWidth = 26; path(); ctx.stroke();
-      ctx.strokeStyle = C.tq; ctx.lineWidth = 10; path(); ctx.stroke();
-      // area fill under the drawn part
-      ctx.globalAlpha = 0.08; ctx.fillStyle = C.tq; path(); const [ex] = pt(dp); ctx.lineTo(ex, yb); ctx.lineTo(x1, yb); ctx.closePath(); ctx.fill();
-      ctx.restore();
-    }
-    // phase labels (generic Hype Cycle phases)
+    paper(ctx); masthead(ctx);
+    const m = P ? 80 : 200;
+    const x0 = m, x1 = W - m, yb = P ? H * 0.6 : H * 0.79, hgt = P ? 470 : 440;
+    const f = (u) => 0.9 * Math.exp(-Math.pow((u - 0.22) / 0.085, 2)) + 0.05 + 0.5 / (1 + Math.exp(-(u - 0.64) / 0.09));
+    const pt = (u) => [x1 - (x1 - x0) * u, yb - f(u) * hgt];
+    kline(ctx, 'أين تقف الوكلاء على منحنى الضجيج؟', P ? cx : W - m, P ? TOP + 165 : TOP + 140, l, 0.1, { size: P ? 48 : 52, w: 800, align: P ? 'center' : 'right' });
+    ctx.fillStyle = C.ink; ctx.fillRect(x0, yb, x1 - x0, 1.5); ctx.fillRect(x1, yb - hgt - 10, 1.5, hgt + 10);
+    txt(ctx, P ? 'التوقعات ↑' : 'التوقعات', P ? x1 : x1 + 20, P ? yb + 32 : yb - hgt - 30, { size: 24, w: 700, color: C.gr, align: P ? 'right' : 'center' });
+    txt(ctx, '← الزمن', x0, yb + 32, { size: 24, w: 700, color: C.gr, align: 'left' });
+    const pts = Array.from({ length: 161 }, (_, i) => pt(i / 160));
+    ink(ctx, pts, eio(k01(l, 0.5, 2.6)), { w: 9 });
     const phases = [
-      { u: 0.22, ar: 'قمة التوقعات المتضخمة', t0: 3.0, dy: -1 },
-      { u: 0.4, ar: 'قاع خيبة الأمل', t0: 4.6, dy: -1 },
-      { u: 0.86, ar: 'هضبة الإنتاجية', t0: 6.2, dy: -1 },
+      { u: 0.22, ar: 'قمة التوقعات المتضخمة', t0: 2.2, up: 60 },
+      { u: 0.4, ar: 'قاع خيبة الأمل', t0: 3.4, up: P ? 110 : 90 },
+      { u: 0.88, ar: 'هضبة الإنتاجية', t0: 4.4, up: 70 },
     ];
-    phases.forEach((ph) => {
-      const [x, y] = pt(ph.u), a = eo(k01(l, ph.t0, 0.4));
-      if (a <= 0) return;
-      const ly = y + ph.dy * (P ? 120 : 100);
-      ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = C.bk; ctx.lineWidth = 2.5; ctx.setLineDash([6, 8]);
-      ctx.beginPath(); ctx.moveTo(x, y + ph.dy * 16); ctx.lineTo(x, ly - ph.dy * 30); ctx.stroke(); ctx.restore();
-      const fs = P ? 36 : 34;
-      ctx.save(); ctx.font = `800 ${fs}px ${AR}`; const tw = ctx.measureText(ph.ar).width; ctx.restore();
-      ctx.save(); ctx.globalAlpha = a; ctx.translate(x, ly); ctx.scale(eb(a) , eb(a));
-      ctx.fillStyle = C.bk; rr(ctx, -tw / 2 - 26, -32, tw + 52, 64, 32); ctx.fill();
-      txt(ctx, ph.ar, 0, 2, { size: fs, w: 800, color: C.wh });
-      ctx.restore();
+    phases.forEach((ph, i) => {
+      const [x, y] = pt(ph.u), a = eo(k01(l, ph.t0, 0.4)); if (a <= 0) return;
+      const ly = y - ph.up;
+      ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = C.ink; ctx.fillRect(x - 0.75, ly + 22, 1.5, y - ly - 30); ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill(); ctx.restore();
+      txt(ctx, ph.ar, x, ly, { size: P ? 30 : 30, w: 800, alpha: a });
     });
-    // the riding dot ("الوكلاء"): rides to the peak, then slides toward the trough
-    const ru = l < 2.5 ? 0 : l < 4.4 ? 0.22 * eio((l - 2.5) / 1.9) : 0.22 + 0.18 * eio((l - 4.4) / 2.2);
-    if (l > 2.4) {
-      const [dx, dy] = pt(ru);
-      const g = ctx.createRadialGradient(dx, dy, 0, dx, dy, 70); g.addColorStop(0, 'rgba(0,193,202,0.45)'); g.addColorStop(1, 'rgba(0,193,202,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(dx, dy, 70, 0, 7); ctx.fill();
-      icon3d(ctx, 'agent', dx, dy - 4, P ? 86 : 80, { pop: k01(l, 2.4, 0.4) });
-    }
-    // headline
-    const hy = P ? H * 0.275 : 190;
-    kline(ctx, 'أين تقف الوكلاء على منحنى الضجيج؟', P ? cx : W - 230, hy, l, 0.1, { size: P ? 54 : 56, w: 800, align: P ? 'center' : 'right' });
-    // the hand points at the active phase
-        const at = (u, dx = 30, dy = 44) => { const [x, y] = pt(u); return [x + dx, y + dy]; };
-    const A = at(0.22), B = at(0.4), Cc = at(0.86);
-    const hk = handAt([[2.6, W + 220, H + 260, -0.55, 0], [3.4, A[0], A[1], -0.45, 0], [4.4, A[0], A[1], -0.45, 0], [5.0, B[0], B[1], -0.45, 0], [6.2, B[0], B[1], -0.45, 0], [6.9, Cc[0], Cc[1], -0.45, 0], [8.0, Cc[0], Cc[1], -0.45, 0], [9.0, W + 220, H + 260, -0.55, 0]], l);
-    hand(ctx, hk[1], hk[2], P ? 85 : 100, { ang: hk[3] });
-    chrome(ctx, t);
+    // agents: placed only once the source position is verified — never guessed
+    if (S.AGENTS_PHASE == null) kline(ctx, 'وين الوكلاء على هذا المنحنى؟ الأرقام تجاوب…', P ? cx : W - m, P ? yb + 80 : yb + 62, l, 5.4, { size: P ? 34 : 32, w: 700, color: C.tqD, align: P ? 'center' : 'right' });
+    slip(ctx, 1, 'دورة الضجيج — منهجية جارتنر', SRC2, P ? cx : W * 0.26, P ? yb + 172 : TOP + 210, l, 1.2);
+    colophon(ctx, t);
   }
 
-  // 4 · CANCEL — a grid of project cards; 4 in 10 flip to "cancelled" by 2027
+  // 4 · EXPECT — 10×10 dot matrix, more than 60 fill in sequence
+  function expect(ctx, t) {
+    const l = local(t, 'expect');
+    paper(ctx); masthead(ctx);
+    const n = S.FACTS.expect, gap = P ? 52 : 50, r = P ? 17 : 16;
+    const gw = gap * 9, gx = P ? cx - gw / 2 : W * 0.3 - gw / 2, gy = P ? TOP + 470 : H * 0.5 - gw / 2 + 20;
+    for (let i = 0; i < 100; i++) {
+      const row = Math.floor(i / 10), col = i % 10, x = gx + gw - col * gap, y = gy + row * gap;
+      const t0 = 0.8 + i * 0.022, on = i < n && l > t0, pop = on ? eb(k01(l, t0, 0.25)) : 1;
+      ctx.fillStyle = on ? C.tq : 'rgba(11,15,18,0.12)';
+      ctx.beginPath(); ctx.arc(x, y, r * (on ? pop : 0.8), 0, 7); ctx.fill();
+    }
+    const tx = P ? cx : W * 0.74, ty = P ? TOP + 200 : H * 0.36;
+    if (l > 0.8) txt(ctx, `+${Math.round(n * eo(k01(l, 0.8, 2.2)))}%`, tx, ty, { size: P ? 190 : 200, w: 800, rtl: false });
+    footMark(ctx, 2, tx - (P ? 225 : 235), ty - 70, l, 3.0, 28);
+    kline(ctx, 'من المؤسسات تتوقّع نشر الوكلاء', tx, ty + (P ? 135 : 145), l, 1.4, { size: 46, w: 800 });
+    kline(ctx, 'خلال عامين', tx, ty + (P ? 200 : 210), l, 1.7, { size: 46, w: 800, color: C.tqD });
+    slip(ctx, 2, 'جارتنر · أكتوبر 2026', SRC2, tx, P ? gy + gw + 88 : ty + 330, l, 3.1);
+    colophon(ctx, t);
+  }
+
+  // 5 · CANCEL — five project dossiers; two get stamped «أُلغي»
+  function stamp(ctx, x, y, s, t, t0) {
+    const p = k01(t, t0, 0.18); if (p <= 0) return;
+    const k = 1 + 0.6 * (1 - eo(p));
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.16); ctx.scale(k, k); ctx.globalAlpha = 0.9 * clamp(p * 3);
+    ctx.strokeStyle = C.red; ctx.lineWidth = s * 0.05; rr(ctx, -s * 0.62, -s * 0.24, s * 1.24, s * 0.48, s * 0.06); ctx.stroke();
+    ctx.lineWidth = s * 0.015; rr(ctx, -s * 0.56, -s * 0.18, s * 1.12, s * 0.36, s * 0.04); ctx.stroke();
+    txt(ctx, 'أُلغي', 0, s * 0.02, { size: s * 0.3, w: 800, color: C.red });
+    ctx.globalCompositeOperation = 'destination-out';
+    const rnd = U.mulberry32(Math.round(x * 7 + y));
+    for (let i = 0; i < 70; i++) { ctx.beginPath(); ctx.arc((rnd() - 0.5) * s * 1.2, (rnd() - 0.5) * s * 0.46, rnd() * s * 0.018, 0, 7); ctx.fill(); }
+    ctx.restore();
+  }
   function cancel(ctx, t) {
     const l = local(t, 'cancel');
-    bg(ctx, t);
-    const cols = 5, rows = P ? 4 : 2, n = cols * rows;
-    const cw = P ? 160 : 200, ch = P ? 100 : 165, gx = P ? 20 : 32, gy = P ? 14 : 36;
-    const gw = cols * cw + (cols - 1) * gx, gh = rows * ch + (rows - 1) * gy;
-    const ox = P ? (W - gw) / 2 : 70, oy = P ? 905 : (H - gh) / 2 - 10;
-    const cut = Math.round(n * S.FACTS.cancel / 100);
-    // deterministic choice of which cards get cancelled
-    const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => U.hash(a, 7) - U.hash(b, 7));
-    const isCut = new Set(order.slice(0, cut));
-    let ci = 0;
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-      const i = r * cols + c, x = ox + gw - (c + 1) * cw - c * gx, y = oy + r * (ch + gy); // RTL order
-      const pop = k01(l, 0.2 + i * 0.05, 0.4);
-      if (pop <= 0) continue;
-      const cutIdx = isCut.has(i) ? ci++ : -1;
-      const flip = cutIdx >= 0 ? k01(l, 2.4 + cutIdx * 0.18, 0.35) : 0;
-      ctx.save(); ctx.translate(x + cw / 2, y + ch / 2 + (1 - eb(pop)) * 30); ctx.globalAlpha = clamp(pop * 2);
-      const sx = Math.abs(Math.cos(flip * Math.PI)); ctx.scale(Math.max(0.02, sx), 1);
-      const back = flip > 0.5;
-      ctx.save(); ctx.shadowColor = 'rgba(0,40,45,0.14)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
-      ctx.fillStyle = back ? '#FFECEC' : C.wh; rr(ctx, -cw / 2, -ch / 2, cw, ch, 22); ctx.fill(); ctx.restore();
-      ctx.strokeStyle = back ? C.red : 'rgba(11,15,18,0.08)'; ctx.lineWidth = 3; rr(ctx, -cw / 2, -ch / 2, cw, ch, 22); ctx.stroke();
-      icon3d(ctx, back ? 'x' : 'agent', 0, -ch * 0.08, ch * 0.48, back ? { color: C.red, dark: C.redD } : {});
-      ctx.fillStyle = back ? 'rgba(255,90,95,0.35)' : 'rgba(11,15,18,0.12)';
-      rr(ctx, -cw * 0.3, ch * 0.3, cw * 0.6, 10, 5); ctx.fill();
+    paper(ctx); masthead(ctx);
+    const cw = P ? 330 : 220, ch = P ? 190 : 290, cut = [1, 3];
+    for (let i = 0; i < 5; i++) {
+      let x, y;
+      if (P) { const row = Math.floor(i / 2); x = i === 4 ? cx : cx + (i % 2 ? -1 : 1) * 175; y = H * 0.43 + row * (ch + 24); }
+      else { x = W * 0.585 - i * (cw + 24); y = H * 0.62; }
+      const p = k01(l, 0.2 + i * 0.12, 0.45); if (p <= 0) continue;
+      ctx.save(); ctx.translate(x, y + (1 - eb(p)) * 60); ctx.rotate((i % 2 ? 1 : -1) * 0.012);
+      ctx.shadowColor = 'rgba(60,50,30,0.16)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 6;
+      ctx.fillStyle = '#FCFBF8'; rr(ctx, cw / 2 - 120, -ch / 2 - 22, 100, 30, 8); ctx.fill();
+      rr(ctx, -cw / 2, -ch / 2, cw, ch, 10); ctx.fill(); ctx.shadowColor = 'transparent';
+      ctx.fillStyle = C.ink; ctx.fillRect(-cw / 2 + 24, -ch / 2 + 22, cw - 48, 1.2);
+      txt(ctx, `مشروع وكيل ${['١', '٢', '٣', '٤', '٥'][i]}`, cw / 2 - 26, -ch / 2 + 54, { size: P ? 30 : 24, w: 800, align: 'right' });
+      for (let k = 0; k < (P ? 2 : 5); k++) { ctx.fillStyle = 'rgba(11,15,18,0.12)'; ctx.fillRect(-cw / 2 + 26, -ch / 2 + 95 + k * 36, (cw - 52) * (k % 2 ? 0.7 : 0.92), 9); }
       ctx.restore();
+      if (cut.includes(i)) stamp(ctx, x, y + 25, P ? 230 : 200, l, 2.3 + cut.indexOf(i) * 0.45);
     }
-    // the statement
-    const tx = P ? cx : W * 0.835, ty = P ? 560 : H * 0.3;
-    if (l > 2.2) {
-      const N = S.FACTS.cancel, v = Math.round(N * eo(k01(l, 2.3, 1.6)));
-      txt(ctx, `+${v}%`, tx, ty, { size: P ? 190 : 170, w: 800, fam: LA, rtl: false, color: C.red, shadow: true });
+    const ty = P ? TOP + 190 : H * 0.25;
+    if (l > 2.2) txt(ctx, `+${Math.round(S.FACTS.cancel * eo(k01(l, 2.2, 1.4)))}%`, P ? cx : W - 96, ty, { size: P ? 170 : 150, w: 800, rtl: false, color: C.red, align: P ? 'center' : 'right' });
+    footMark(ctx, 3, P ? cx - 200 : W - 96 - 380, ty - 60, l, 3.6, 28);
+    if (!P) {
+      kline(ctx, 'من مشاريع الوكلاء متوقّع إلغاؤها', W - 96, ty + 115, l, 2.6, { size: 44, w: 800, align: 'right' });
+      kline(ctx, 'بنهاية 2027 · ≈ مشروعان من كل خمسة', W - 96, ty + 175, l, 3.0, { size: 34, w: 700, color: C.gr, align: 'right' });
+      slip(ctx, 3, 'جارتنر · أكتوبر 2026', SRC2, W * 0.3, ty + 20, l, 3.7);
+    } else {
+      kline(ctx, 'من مشاريع الوكلاء متوقّع إلغاؤها بنهاية 2027', cx, ty + 120, l, 2.6, { size: 40, w: 800 });
+      kline(ctx, '≈ مشروعان من كل خمسة', cx, ty + 178, l, 3.0, { size: 34, w: 700, color: C.gr });
     }
-    kline(ctx, 'من مشاريع الوكلاء', tx, ty + (P ? 130 : 145), l, 3.0, { size: P ? 54 : 52, w: 800 });
-    kline(ctx, 'متوقع إلغاؤها', tx, ty + (P ? 205 : 215), l, 3.3, { size: P ? 54 : 52, w: 800, color: C.red });
-    // calendar badge "by end of 2027"
-    const bx = tx, by = ty + (P ? 290 : 320);
-    icon3d(ctx, 'calendar', bx + (P ? 150 : 140), by, P ? 80 : 84, { pop: k01(l, 3.7, 0.4), color: C.bk, dark: '#000', glyph: C.wh });
-    kline(ctx, 'بنهاية 2027', bx - (P ? 40 : 30), by, l, 3.8, { size: P ? 46 : 44, w: 700, color: C.gr });
-    chrome(ctx, t);
+    colophon(ctx, t);
   }
 
-  // 5 · SHIFT — the question moves from "build" to "accountability"
+  // 6 · SHIFT — the wrong question is struck through in ink; the right one slams in
   function shift(ctx, t) {
     const l = local(t, 'shift');
-    bg(ctx, t);
-    const cy = P ? H * 0.47 : H * 0.5;
-    const sep = P ? 0 : 380, vy = P ? 330 : 0;
-    // left (old question) → fades and slides away; right (new) → grows
-    const swap = eio(k01(l, 1.8, 0.8));
-    const ax = P ? cx : cx + sep, ay = P ? cy - vy : cy;
-    const bxx = P ? cx : cx - sep, byy = P ? cy + vy * 0.35 : cy;
-    icon3d(ctx, 'rocket', ax, ay - 40, (P ? 190 : 210) * (1 - swap * 0.35), { pop: k01(l, 0.2, 0.5) });
-    txt(ctx, 'كيف نبني الوكيل؟', ax, ay + (P ? 110 : 140), { size: P ? 50 : 52, w: 800, color: swap > 0.1 ? '#8A979E' : C.bk, alpha: clamp(k01(l, 0.4, 0.4)) });
-    if (swap > 0) { // strike-through
-      ctx.save(); ctx.font = `800 ${P ? 50 : 52}px ${AR}`; const tw = ctx.measureText('كيف نبني الوكيل؟').width; ctx.restore();
-      ctx.strokeStyle = 'rgba(255,90,95,0.8)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(ax + tw / 2, ay + (P ? 112 : 142)); ctx.lineTo(ax + tw / 2 - tw * swap, ay + (P ? 112 : 142)); ctx.stroke();
+    paper(ctx); masthead(ctx);
+    const y1 = P ? H * 0.34 : H * 0.33, s1 = P ? 70 : 80;
+    txt(ctx, 'كيف نبني الوكيل؟', cx, y1, { size: s1, w: 800, color: l > 1.2 ? 'rgba(11,15,18,0.4)' : C.ink, alpha: k01(l, 0.1, 0.4) });
+    const w1 = measure(ctx, 'كيف نبني الوكيل؟', s1, 800);
+    ink(ctx, linePts(cx + w1 / 2 + 20, y1 + 6, cx - w1 / 2 - 20, y1 - 4, -8), eio(k01(l, 0.8, 0.5)), { w: 10 });
+    const sp = k01(l, 1.5, 0.25);
+    if (sp > 0) {
+      const k = 1 + 0.5 * (1 - eo(sp)), s2 = P ? 140 : 170;
+      ctx.save(); ctx.translate(cx, P ? H * 0.47 : H * 0.54); ctx.scale(k, k);
+      txt(ctx, 'مَن المسؤول؟', 0, 0, { size: s2, w: 800, alpha: clamp(sp * 3) }); ctx.restore();
     }
-    // arrow
-    const ap = eo(k01(l, 1.4, 0.5));
-    if (ap > 0) {
-      ctx.save(); ctx.strokeStyle = C.tq; ctx.fillStyle = C.tq; ctx.lineWidth = 10; ctx.lineCap = 'round';
-      if (P) { const y0 = ay + 165, y1 = y0 + 95 * ap; ctx.beginPath(); ctx.moveTo(cx, y0); ctx.lineTo(cx, y1); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx - 24, y1 - 10); ctx.lineTo(cx, y1 + 22); ctx.lineTo(cx + 24, y1 - 10); ctx.fill(); }
-      else { const x0 = cx + 150, x1 = x0 - 300 * ap; ctx.beginPath(); ctx.moveTo(x0, cy - 40); ctx.lineTo(x1, cy - 40); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x1 + 10, cy - 64); ctx.lineTo(x1 - 22, cy - 40); ctx.lineTo(x1 + 10, cy - 16); ctx.fill(); }
-      ctx.restore();
-    }
-    const sd = P ? 1 : -1, sA = P ? -Math.PI / 2 : Math.PI / 2, sx0 = bxx + sd * (P ? 120 : 130), sy0 = byy - 50; // from the right (9:16) / left (16:9), finger horizontal
-    const hkS = handAt([[2.4, sx0 + sd * 700, sy0 + 60, sA, 0], [3.2, sx0, sy0, sA, 0], [3.35, sx0, sy0, sA, 1], [3.6, sx0, sy0, sA, 0], [4.4, sx0 + sd * 700, sy0 + 60, sA, 0]], l);
-    icon3d(ctx, 'scale', bxx, byy - 40, (P ? 220 : 240) * (0.7 + swap * 0.3), { pop: k01(l, 1.9, 0.5), press: hkS[4] });
-    kline(ctx, 'مَن يُحاسَب؟', bxx, byy + (P ? 180 : 200), l, 2.2, { size: P ? 72 : 76, w: 800, color: C.tq });
-    kline(ctx, 'الحوكمة قبل التوسّع', bxx, byy + (P ? 265 : 285), l, 2.6, { size: P ? 42 : 42, w: 500, color: C.gr });
-    // the hand taps the scale
-    ripple(ctx, sx0, sy0, l, 3.35, 110);
-    hand(ctx, hkS[1], hkS[2], P ? 160 : 150, { ang: hkS[3], press: hkS[4] });
-    chrome(ctx, t);
+    kline(ctx, 'مَن يمسك الحبل إذا الوكيل غلط؟', cx, P ? H * 0.57 : H * 0.7, l, 2.2, { size: 44, w: 700, color: C.tqD });
+    kline(ctx, 'القيمة اليوم في التحكّم والحوكمة، لا في البناء وحده', cx, P ? H * 0.63 : H * 0.78, l, 2.7, { size: P ? 30 : 32, w: 500, color: C.gr });
+    colophon(ctx, t);
   }
 
-  // 6 · END CARD — logo, all handles, the source, a question for the comments
+  // 7 · CHECK — journal sidebar: three questions, ink ticks each
+  function check(ctx, t) {
+    const l = local(t, 'check');
+    paper(ctx); masthead(ctx);
+    const m = P ? 60 : 96, bx = P ? m : W * 0.16, bw = P ? W - 2 * m : W * 0.68, by = P ? TOP + 140 : TOP + 125, bh = P ? 780 : 640;
+    const a = k01(l, 0, 0.4);
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(0,193,202,0.07)'; ctx.fillRect(bx, by, bw, bh); ctx.fillStyle = C.tq; ctx.fillRect(bx + bw - 10, by, 10, bh); ctx.restore();
+    kline(ctx, P ? 'قبل أن تُطلق وكيلاً في مؤسستك' : 'قبل أن تُطلق وكيلاً في مؤسستك التعليمية', bx + bw - 50, by + 70, l, 0.2, { size: P ? 42 : 46, w: 800, align: 'right' });
+    txt(ctx, 'رأي تطبيقي — د. يحيى الأمير', bx + bw - 50, by + 125, { size: 24, w: 600, align: 'right', color: C.gr, alpha: k01(l, 0.6, 0.4) });
+    ['ما المهمة بالضبط؟', 'مَن يراجع قراراته؟', 'كيف نوقفه إذا أخطأ؟'].forEach((it, i) => {
+      const iy = by + (P ? 250 : 235) + i * (P ? 150 : 115), t0 = 1.0 + i * 1.3;
+      txt(ctx, ['١', '٢', '٣'][i], bx + bw - 60, iy, { size: P ? 60 : 56, w: 800, color: C.tq, alpha: k01(l, t0, 0.3) });
+      kline(ctx, it, bx + bw - 125, iy, l, t0, { size: P ? 48 : 50, w: 800, align: 'right' });
+      const tx = bx + (P ? 80 : 110);
+      ctx.save(); ctx.globalAlpha = k01(l, t0, 0.3); ctx.strokeStyle = 'rgba(11,15,18,0.3)'; ctx.lineWidth = 2; ctx.strokeRect(tx - 32, iy - 32, 64, 64); ctx.restore();
+      ink(ctx, tickPts(tx, iy, 44), eo(k01(l, t0 + 0.7, 0.35)), { w: 9 });
+    });
+    kline(ctx, 'الحوكمة قبل التوسّع', bx + bw / 2, by + bh - 60, l, 5.0, { size: 44, w: 800, color: C.tqD });
+    colophon(ctx, t);
+  }
+
+  // 8 · END — the ink signs the logo; the margin is yours
   function end(ctx, t) {
     const l = local(t, 'end');
-    bg(ctx, t);
-    const cy = P ? H * 0.25 : H * 0.22;
-    logoFull(ctx, cx, cy, P ? 300 : 270, { draw: k01(l, 0, 1.0) });
-    kline(ctx, 'سؤالك للتعليقات: هل جرّبت وكيلاً في عملك؟', cx, P ? H * 0.4 : H * 0.44, l, 0.9, { size: P ? 40 : 46, w: 800 });
-    // handles grid
-    const items = [['X', '@y7yr_'], ['TikTok', '@i.y7y'], ['LinkedIn', 'in/yahya-alameer'], ['Links', 'linktr.ee/yalameer']];
-    const cols = P ? 1 : 4, bw = P ? 640 : 400, bh = 84, gap = 20;
-    const tw = cols * bw + (cols - 1) * gap, ox = (W - tw) / 2, oy = P ? H * 0.545 : H * 0.79;
-    items.forEach(([k, v], i) => {
-      const c = i % cols, r = Math.floor(i / cols), x = ox + c * (bw + gap), y = oy + r * (bh + gap);
-      const p = k01(l, 1.3 + i * 0.12, 0.4); if (p <= 0) return;
-      ctx.save(); ctx.globalAlpha = clamp(p * 2); ctx.translate(0, (1 - eb(p)) * 30);
-      ctx.fillStyle = C.wh; ctx.shadowColor = 'rgba(0,40,45,0.12)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 6; rr(ctx, x, y, bw, bh, bh / 2); ctx.fill(); ctx.shadowColor = 'transparent';
-      const lw2 = P ? 170 : 116; ctx.fillStyle = C.tq; rr(ctx, x, y, lw2, bh, bh / 2); ctx.fill();
-      txt(ctx, k, x + lw2 / 2, y + bh / 2 + 2, { size: P ? 26 : 22, w: 700, fam: LA, rtl: false, color: C.bk });
-      txt(ctx, v, x + lw2 + (bw - lw2) / 2, y + bh / 2 + 2, { size: P ? 30 : 23, w: 600, fam: LA, rtl: false, color: C.bk });
-      ctx.restore();
+    paper(ctx);
+    const ly = P ? TOP + 170 : H * 0.25;
+    logoMark(ctx, cx, ly, P ? 260 : 230, k01(l, 0, 1.4));
+    txt(ctx, 'YAHYA ALAMEER', cx, ly + (P ? 80 : 72), { size: P ? 40 : 36, w: 700, fam: LA, rtl: false, alpha: k01(l, 1.0, 0.5) });
+    txt(ctx, 'INSTRUCTIONAL DESIGN', cx, ly + (P ? 118 : 106), { size: P ? 20 : 18, w: 500, fam: LA, rtl: false, color: C.gr, alpha: k01(l, 1.1, 0.5) });
+    const qy = P ? H * 0.43 : H * 0.52;
+    kline(ctx, 'هل جرّبت وكيلاً في عملك؟', cx, qy, l, 1.2, { size: P ? 56 : 60, w: 800 });
+    kline(ctx, 'اكتب حاشيتك في التعليقات', cx, qy + 78, l, 1.5, { size: 40, w: 700, color: C.tqD });
+    const cy2 = qy + 150, lw = P ? 600 : 720;
+    ctx.fillStyle = C.rule; ctx.fillRect(cx - lw / 2, cy2 + 26, lw, 1.5);
+    if (l > 1.8 && Math.floor(l * 2.2) % 2 === 0) { ctx.fillStyle = C.tq; ctx.fillRect(cx + lw / 2 - 10, cy2 - 18, 5, 40); }
+    const hy = P ? cy2 + 120 : H * 0.8, items = ['X  @y7yr_', 'TikTok  @i.y7y', 'LinkedIn  in/yahya-alameer', 'linktr.ee/yalameer'];
+    items.forEach((v, i) => {
+      const x = P ? cx : cx + (1.5 - i) * 400, y = P ? hy + i * 56 : hy;
+      txt(ctx, v, x, y, { size: P ? 30 : 27, w: 600, fam: LA, rtl: false, alpha: k01(l, 2.0 + i * 0.12, 0.4) });
     });
-    // clay "follow" button pressed by the hand
-    const fbx = cx, fby = P ? H * 0.4 + 125 : H * 0.44 + 125;
-    const fp = k01(l, 2.0, 0.5);
-    const fex = fbx + (P ? 150 : 140) + 18, fey = fby - 8;
-    const hkE = handAt([[2.2, W + 400, fey + 40, -Math.PI / 2, 0], [3.1, fex, fey, -Math.PI / 2, 0], [3.25, fex - 6, fey, -Math.PI / 2, 1], [3.5, fex, fey, -Math.PI / 2, 0], [4.6, W + 400, fey + 40, -Math.PI / 2, 0]], l);
-    clayButton(ctx, 'تابعني', fbx, fby, P ? 300 : 280, P ? 96 : 90, { pop: fp, press: hkE[4] });
-    ripple(ctx, fex, fey, l, 3.25, 120);
-    hand(ctx, hkE[1], hkE[2], P ? 130 : 115, { ang: hkE[3], press: hkE[4] });
-    txt(ctx, 'Source: Gartner — AI Hype Cycle (October 2026)', cx, P ? H * 0.545 + 4 * 104 + 30 : H - 70, { size: 24, w: 500, fam: LA, rtl: false, color: C.gr, alpha: k01(l, 1.8, 0.5) });
+    const ry = P ? hy + 4 * 56 : hy + 56;
+    ctx.fillStyle = C.ink; ctx.fillRect(P ? 60 : 96, ry, W - (P ? 120 : 192), 1.2);
+    txt(ctx, 'Sources ¹ ² ³ — Gartner, AI Hype Cycle (October 2026)', cx, ry + 38, { size: 22, w: 500, fam: LA, rtl: false, color: C.gr, alpha: k01(l, 2.4, 0.5) });
   }
 
-  // ---------------------------------------------------------------- transitions (iris from the hand)
-  const SCENES = { hook, title, curve, cancel, shift, end };
-  const ORDER = ['hook', 'title', 'curve', 'cancel', 'shift', 'end'];
-  const TR = 0.55;
+  // ---------------------------------------------------------------- transitions: page slides in from the left (RTL page turn)
+  const SCENES = { hook, title, curve, expect, cancel, shift, check, end };
+  const ORDER = Object.keys(S.S);
+  const TR = 0.5;
   function draw(ctx, t) {
     let idx = ORDER.findIndex((k) => t >= S.S[k][0] && t < S.S[k][1]); if (idx < 0) idx = ORDER.length - 1;
     const cur = ORDER[idx], start = S.S[cur][0];
     if (idx > 0 && t < start + TR) {
-      // previous scene underneath, the new one revealed in a growing turquoise-edged circle
       SCENES[ORDER[idx - 1]](ctx, Math.min(t, start - 1e-3));
-      const p = eio((t - start) / TR), R = Math.hypot(W, H) * p;
-      const ox = W * 0.5, oy = H * 0.5;
-      ctx.save(); ctx.beginPath(); ctx.arc(ox, oy, R, 0, 7); ctx.clip(); SCENES[cur](ctx, t); ctx.restore();
-      ctx.save(); ctx.strokeStyle = C.tq; ctx.lineWidth = 40 * (1 - p) + 4; ctx.beginPath(); ctx.arc(ox, oy, R, 0, 7); ctx.stroke(); ctx.restore();
+      const edge = W * eio((t - start) / TR);
+      ctx.save(); ctx.shadowColor = 'rgba(60,50,30,0.35)'; ctx.shadowBlur = 40; ctx.shadowOffsetX = 12;
+      ctx.fillStyle = C.paper; ctx.fillRect(0, 0, edge, H); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, edge, H); ctx.clip(); ctx.translate(edge - W, 0); SCENES[cur](ctx, t); ctx.restore();
     } else SCENES[cur](ctx, t);
   }
 
   Studio.film({
     duration: S.DURATION,
     fadeOut: 0.8,
-    post: { vignette: 0.1, grain: 0.012, paper: 0 },
+    post: { vignette: 0.05, grain: 0.01, paper: 0 },
     async init() {
-      HAND.point.img = await Studio.loadImage('assets/hand/point.png');
-      HAND.press.img = await Studio.loadImage('assets/hand/press.png');
-      try {
-        BTN.img = await Studio.loadImage('assets/button/button.png');
-        BTN.red = await Studio.loadImage('assets/button/button-red.png');
-        BTN.black = await Studio.loadImage('assets/button/button-black.png');
-      } catch (e) { BTN.img = null; }
+      GRAIN = makeGrain();
       const F = 'assets/fonts/';
       for (const w of [500, 700, 800]) {
         await Studio.loadFont('Tajawal', F + `tajawal-arabic-${w}-normal.woff2`, w);

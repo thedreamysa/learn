@@ -17,13 +17,15 @@
   // scenes [start, end] in seconds
   const S = {
     hook: [0, 5],
-    title: [5, 9],
-    curve: [9, 18],
-    cancel: [18, 24],
-    shift: [24, 29],
-    end: [29, 34],
+    title: [5, 9.5],
+    curve: [9.5, 17.5],
+    expect: [17.5, 22.5],
+    cancel: [22.5, 28.5],
+    shift: [28.5, 33.5],
+    check: [33.5, 39.5],
+    end: [39.5, 45],
   };
-  const DURATION = 34;
+  const DURATION = 45;
   const ev = Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v[0]]));
 
   // on-screen facts — PENDING SOURCE VERIFICATION (Gartner page must be opened before the final render)
@@ -32,11 +34,13 @@
     expect: 60, // % expecting to deploy within two years ("more than")
     cancel: 40, // % of agentic projects expected to be cancelled by end-2027 ("more than")
   };
-  const SOURCE = { ar: 'جارتنر · أكتوبر 2026', en: 'Gartner Hype Cycle for AI' };
+  const SOURCE = { ar: 'جارتنر · أكتوبر 2026', en: 'Gartner — AI Hype Cycle, Oct 2026' };
+  // where Gartner places AI agents on the curve: null until verified on the source page (no guessing)
+  const AGENTS_PHASE = null;
   const HANDLES = ['X  @y7yr_', 'TikTok  @i.y7y', 'LinkedIn  in/yahya-alameer', 'linktr.ee/yalameer'];
 
   const markers = Object.fromEntries(Object.entries(ev).map(([k, t]) => [k, { t, sync: 'v' }]));
 
-  const SCORE = { FPS, FORMAT, W, H, SAFE, DURATION, clock, T, BEAT, S, m, ev, FACTS, SOURCE, HANDLES, markers, vo: [], subtitles: [] };
+  const SCORE = { FPS, FORMAT, W, H, SAFE, DURATION, clock, T, BEAT, S, m, ev, FACTS, SOURCE, AGENTS_PHASE, HANDLES, markers, vo: [], subtitles: [] };
   if (node) module.exports = SCORE; else globalThis.SCORE = SCORE;
 })();
