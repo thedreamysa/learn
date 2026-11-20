@@ -10,7 +10,7 @@
   const AR = '"Tajawal", "TajawalL", sans-serif';
   const LA = '"Poppins", "TajawalL", sans-serif';
   const cx = W / 2;
-  const TOP = P ? 300 : 40, FOOT = P ? Math.round(H * 0.775) : H - 40;
+  const TOP = P ? 250 : 40, FOOT = P ? Math.round(H * 0.775) : H - 40;
 
   // ---------------------------------------------------------------- helpers
   const k01 = (t, a, d) => clamp((t - a) / d);
@@ -83,7 +83,7 @@
     ctx.restore();
   }
   function loopPts(x, y, rx, ry, seed = 1) {
-    const pts = [], a0 = -2.5, turns = 1.12;
+    const pts = [], a0 = -2.5, turns = 0.99;
     for (let i = 0; i <= 90; i++) {
       const a = a0 + (i / 90) * Math.PI * 2 * turns, wob = 1 + 0.03 * Math.sin(i * 0.31 + seed) + (i / 90) * 0.05;
       pts.push([x + Math.cos(a) * rx * wob, y + Math.sin(a) * ry * wob * (1 - 0.04 * Math.cos(a * 2))]);
@@ -170,18 +170,23 @@
   function hook(ctx, t) {
     const l = t;
     paper(ctx); masthead(ctx);
-    const ny = P ? H * 0.43 : H * 0.44, size = P ? 380 : 340;
-    kline(ctx, 'كم مؤسسة نشرت وكلاء ذكاء اصطناعي فعلاً؟', cx, ny - size * 0.75, l, 0.05, { size: P ? 42 : 40, w: 700, color: C.gr });
+    const ny = P ? H * 0.42 : H * 0.44, size = P ? 300 : 340;
+    kline(ctx, 'كم مؤسسة نشرت وكلاء ذكاء اصطناعي فعلاً؟', cx, ny - size * 0.8, l, 0.05, { size: P ? 40 : 40, w: 700, color: C.gr });
+    txt(ctx, 'خمّن قبل الكشف…', cx, ny + size * 0.72, { size: P ? 44 : 42, w: 700, color: C.tqD, alpha: k01(l, 0.4, 0.3) * (1 - k01(l, 1.25, 0.2)) });
     const rv = eio(k01(l, 1.3, 0.35));
     ctx.save(); ctx.beginPath(); ctx.rect(0, ny - size * 0.6, W, size * 1.2 * (1 - rv)); ctx.clip();
-    txt(ctx, '؟٪', cx, ny, { size, w: 800, color: 'rgba(11,15,18,0.16)' }); ctx.restore();
+    txt(ctx, '؟٪', cx, ny, { size, w: 800, color: 'rgba(11,15,18,0.88)' }); ctx.restore();
+    if (l < 1.7) { ctx.save(); ctx.globalAlpha = 0.35 * (1 - k01(l, 1.3, 0.3)); ctx.setLineDash([14, 16]); ctx.strokeStyle = C.tq; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(cx, ny + size * 0.04, Math.min(measure(ctx, '17%', size, 800) * 0.68, W / 2 - 90), size * 0.52, 0, 0, 7); ctx.stroke(); ctx.restore(); }
     ctx.save(); ctx.beginPath(); ctx.rect(0, ny + size * 0.6 - size * 1.2 * rv, W, size * 1.2 * rv); ctx.clip();
     txt(ctx, `${S.FACTS.deployed}%`, cx, ny, { size, w: 800, rtl: false }); ctx.restore();
     const nw = measure(ctx, `${S.FACTS.deployed}%`, size, 800);
-    ink(ctx, loopPts(cx, ny + size * 0.04, nw * 0.68, size * 0.52, 2), eio(k01(l, 1.7, 0.75)), { w: P ? 11 : 10 });
+    ink(ctx, loopPts(cx, ny + size * 0.04, Math.min(nw * 0.68, W / 2 - 90), size * 0.52, 2), eio(k01(l, 1.7, 0.75)), { w: 10 });
     footMark(ctx, 1, cx - nw * 0.62, ny - size * 0.38, l, 2.35, P ? 34 : 30);
-    kline(ctx, 'فقط من المؤسسات نشرت وكلاء ذكاء اصطناعي', cx, ny + size * 0.8, l, 2.0, { size: P ? 50 : 50, w: 800 });
-    slip(ctx, 1, 'جارتنر · أكتوبر 2026', SRC2, P ? cx : W * 0.17, P ? ny + size * 1.15 : ny + size * 0.45, l, 2.6);
+    if (P) {
+      kline(ctx, 'فقط من المؤسسات', cx, ny + size * 0.85, l, 2.0, { size: 54, w: 800 });
+      kline(ctx, 'نشرت وكلاء ذكاء اصطناعي', cx, ny + size * 0.85 + 70, l, 2.15, { size: 46, w: 700 });
+    } else kline(ctx, 'فقط من المؤسسات نشرت وكلاء ذكاء اصطناعي', cx, ny + size * 0.8, l, 2.0, { size: 50, w: 800 });
+    slip(ctx, 1, 'جارتنر · أكتوبر 2026', SRC2, P ? cx : W * 0.17, P ? ny + size * 0.85 + 190 : ny + size * 0.45, l, 2.6);
     colophon(ctx, t);
   }
 
@@ -217,21 +222,21 @@
     txt(ctx, P ? 'التوقعات ↑' : 'التوقعات', P ? x1 : x1 + 20, P ? yb + 32 : yb - hgt - 30, { size: 24, w: 700, color: C.gr, align: P ? 'right' : 'center' });
     txt(ctx, '← الزمن', x0, yb + 32, { size: 24, w: 700, color: C.gr, align: 'left' });
     const pts = Array.from({ length: 161 }, (_, i) => pt(i / 160));
-    ink(ctx, pts, eio(k01(l, 0.5, 2.6)), { w: 9 });
+    ink(ctx, pts, eio(k01(l, 0.5, 2.6)), { w: 10 });
     const phases = [
       { u: 0.22, ar: 'قمة التوقعات المتضخمة', t0: 2.2, up: 60 },
-      { u: 0.4, ar: 'قاع خيبة الأمل', t0: 3.4, up: P ? 110 : 90 },
+      { u: 0.4, ar: 'قاع خيبة الأمل', t0: 3.4, up: P ? 110 : 90, dx: P ? -150 : -190 },
       { u: 0.88, ar: 'هضبة الإنتاجية', t0: 4.4, up: 70 },
     ];
     phases.forEach((ph, i) => {
       const [x, y] = pt(ph.u), a = eo(k01(l, ph.t0, 0.4)); if (a <= 0) return;
-      const ly = y - ph.up;
-      ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = C.ink; ctx.fillRect(x - 0.75, ly + 22, 1.5, y - ly - 30); ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill(); ctx.restore();
-      txt(ctx, ph.ar, x, ly, { size: P ? 30 : 30, w: 800, alpha: a });
+      const ly = y - ph.up, lx = x + (ph.dx || 0);
+      ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(lx, ly + 22); ctx.lineTo(x, y - 8); ctx.stroke(); ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill(); ctx.restore();
+      txt(ctx, ph.ar, lx, ly, { size: P ? 30 : 30, w: 800, alpha: a });
     });
     // agents: placed only once the source position is verified — never guessed
-    if (S.AGENTS_PHASE == null) kline(ctx, 'وين الوكلاء على هذا المنحنى؟ الأرقام تجاوب…', P ? cx : W - m, P ? yb + 80 : yb + 62, l, 5.4, { size: P ? 34 : 32, w: 700, color: C.tqD, align: P ? 'center' : 'right' });
-    slip(ctx, 1, 'دورة الضجيج — منهجية جارتنر', SRC2, P ? cx : W * 0.26, P ? yb + 172 : TOP + 210, l, 1.2);
+    if (S.AGENTS_PHASE == null) kline(ctx, 'أين الوكلاء على هذا المنحنى؟ الأرقام تجيب…', P ? cx : W - m, P ? yb + 80 : yb + 62, l, 5.4, { size: P ? 34 : 32, w: 700, color: C.tqD, align: P ? 'center' : 'right' });
+    slip(ctx, 2, 'دورة الضجيج — منهجية جارتنر', SRC2, P ? cx : W * 0.36, P ? yb + 172 : yb + 58, l, 1.2);
     colophon(ctx, t);
   }
 
@@ -249,10 +254,10 @@
     }
     const tx = P ? cx : W * 0.74, ty = P ? TOP + 200 : H * 0.36;
     if (l > 0.8) txt(ctx, `+${Math.round(n * eo(k01(l, 0.8, 2.2)))}%`, tx, ty, { size: P ? 190 : 200, w: 800, rtl: false });
-    footMark(ctx, 2, tx - (P ? 225 : 235), ty - 70, l, 3.0, 28);
+    footMark(ctx, 3, tx - (P ? 225 : 235), ty - 70, l, 3.0, 28);
     kline(ctx, 'من المؤسسات تتوقّع نشر الوكلاء', tx, ty + (P ? 135 : 145), l, 1.4, { size: 46, w: 800 });
     kline(ctx, 'خلال عامين', tx, ty + (P ? 200 : 210), l, 1.7, { size: 46, w: 800, color: C.tqD });
-    slip(ctx, 2, 'جارتنر · أكتوبر 2026', SRC2, tx, P ? gy + gw + 88 : ty + 330, l, 3.1);
+    slip(ctx, 3, 'جارتنر · أكتوبر 2026', SRC2, tx, P ? gy + gw + 88 : ty + 330, l, 3.1);
     colophon(ctx, t);
   }
 
@@ -261,12 +266,12 @@
     const p = k01(t, t0, 0.18); if (p <= 0) return;
     const k = 1 + 0.6 * (1 - eo(p));
     ctx.save(); ctx.translate(x, y); ctx.rotate(-0.16); ctx.scale(k, k); ctx.globalAlpha = 0.9 * clamp(p * 3);
-    ctx.strokeStyle = C.red; ctx.lineWidth = s * 0.05; rr(ctx, -s * 0.62, -s * 0.24, s * 1.24, s * 0.48, s * 0.06); ctx.stroke();
+    ctx.strokeStyle = C.ink; ctx.lineWidth = s * 0.05; rr(ctx, -s * 0.62, -s * 0.24, s * 1.24, s * 0.48, s * 0.06); ctx.stroke();
     ctx.lineWidth = s * 0.015; rr(ctx, -s * 0.56, -s * 0.18, s * 1.12, s * 0.36, s * 0.04); ctx.stroke();
-    txt(ctx, 'أُلغي', 0, s * 0.02, { size: s * 0.3, w: 800, color: C.red });
+    txt(ctx, 'أُلغي', 0, s * 0.06, { size: s * 0.29, w: 800, color: C.ink });
     ctx.globalCompositeOperation = 'destination-out';
     const rnd = U.mulberry32(Math.round(x * 7 + y));
-    for (let i = 0; i < 70; i++) { ctx.beginPath(); ctx.arc((rnd() - 0.5) * s * 1.2, (rnd() - 0.5) * s * 0.46, rnd() * s * 0.018, 0, 7); ctx.fill(); }
+    for (let i = 0; i < 26; i++) { ctx.beginPath(); ctx.arc((rnd() - 0.5) * s * 1.2, (rnd() - 0.5) * s * 0.46, rnd() * s * 0.01, 0, 7); ctx.fill(); }
     ctx.restore();
   }
   function cancel(ctx, t) {
@@ -276,25 +281,26 @@
     for (let i = 0; i < 5; i++) {
       let x, y;
       if (P) { const row = Math.floor(i / 2); x = i === 4 ? cx : cx + (i % 2 ? -1 : 1) * 175; y = H * 0.43 + row * (ch + 24); }
-      else { x = W * 0.585 - i * (cw + 24); y = H * 0.62; }
+      else { x = cx + (2 - i) * (cw + 24); y = H * 0.66; }
       const p = k01(l, 0.2 + i * 0.12, 0.45); if (p <= 0) continue;
       ctx.save(); ctx.translate(x, y + (1 - eb(p)) * 60); ctx.rotate((i % 2 ? 1 : -1) * 0.012);
       ctx.shadowColor = 'rgba(60,50,30,0.16)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 6;
       ctx.fillStyle = '#FCFBF8'; rr(ctx, cw / 2 - 120, -ch / 2 - 22, 100, 30, 8); ctx.fill();
       rr(ctx, -cw / 2, -ch / 2, cw, ch, 10); ctx.fill(); ctx.shadowColor = 'transparent';
       ctx.fillStyle = C.ink; ctx.fillRect(-cw / 2 + 24, -ch / 2 + 22, cw - 48, 1.2);
-      txt(ctx, `مشروع وكيل ${['١', '٢', '٣', '٤', '٥'][i]}`, cw / 2 - 26, -ch / 2 + 54, { size: P ? 30 : 24, w: 800, align: 'right' });
+      txt(ctx, `مشروع وكيل ${String(i + 1)}`, cw / 2 - 26, -ch / 2 + 54, { size: P ? 30 : 24, w: 800, align: 'right' });
       for (let k = 0; k < (P ? 2 : 5); k++) { ctx.fillStyle = 'rgba(11,15,18,0.12)'; ctx.fillRect(-cw / 2 + 26, -ch / 2 + 95 + k * 36, (cw - 52) * (k % 2 ? 0.7 : 0.92), 9); }
       ctx.restore();
-      if (cut.includes(i)) stamp(ctx, x, y + 25, P ? 230 : 200, l, 2.3 + cut.indexOf(i) * 0.45);
+      if (cut.includes(i)) stamp(ctx, x, y + (P ? 45 : 35), P ? 200 : 170, l, 2.3 + cut.indexOf(i) * 0.45);
     }
-    const ty = P ? TOP + 190 : H * 0.25;
-    if (l > 2.2) txt(ctx, `+${Math.round(S.FACTS.cancel * eo(k01(l, 2.2, 1.4)))}%`, P ? cx : W - 96, ty, { size: P ? 170 : 150, w: 800, rtl: false, color: C.red, align: P ? 'center' : 'right' });
-    footMark(ctx, 3, P ? cx - 200 : W - 96 - 380, ty - 60, l, 3.6, 28);
+    const ty = P ? TOP + 240 : H * 0.25;
+    if (l > 2.2) txt(ctx, `+${Math.round(S.FACTS.cancel * eo(k01(l, 2.2, 1.4)))}%`, P ? cx : W - 96, ty, { size: P ? 170 : 150, w: 800, rtl: false, align: P ? 'center' : 'right' });
+    { const nw = measure(ctx, '+40%', P ? 170 : 150, 800), ux = P ? cx + nw / 2 : W - 96, uy = ty + (P ? 82 : 72); ink(ctx, linePts(ux, uy, ux - nw, uy + 4, 5), eio(k01(l, 2.6, 0.6)), { w: 10 }); }
+    footMark(ctx, 4, P ? cx - 200 : W - 96 - 380, ty - 60, l, 3.6, 28);
     if (!P) {
       kline(ctx, 'من مشاريع الوكلاء متوقّع إلغاؤها', W - 96, ty + 115, l, 2.6, { size: 44, w: 800, align: 'right' });
       kline(ctx, 'بنهاية 2027 · ≈ مشروعان من كل خمسة', W - 96, ty + 175, l, 3.0, { size: 34, w: 700, color: C.gr, align: 'right' });
-      slip(ctx, 3, 'جارتنر · أكتوبر 2026', SRC2, W * 0.3, ty + 20, l, 3.7);
+      slip(ctx, 4, 'جارتنر · أكتوبر 2026', SRC2, W * 0.27, ty + 175, l, 3.7);
     } else {
       kline(ctx, 'من مشاريع الوكلاء متوقّع إلغاؤها بنهاية 2027', cx, ty + 120, l, 2.6, { size: 40, w: 800 });
       kline(ctx, '≈ مشروعان من كل خمسة', cx, ty + 178, l, 3.0, { size: 34, w: 700, color: C.gr });
@@ -325,18 +331,19 @@
   function check(ctx, t) {
     const l = local(t, 'check');
     paper(ctx); masthead(ctx);
-    const m = P ? 60 : 96, bx = P ? m : W * 0.16, bw = P ? W - 2 * m : W * 0.68, by = P ? TOP + 140 : TOP + 125, bh = P ? 780 : 640;
+    const m = P ? 60 : 96, bx = P ? m : W * 0.24, bw = P ? W - 2 * m : W * 0.52, by = P ? TOP + 140 : TOP + 125, bh = P ? 780 : 720;
     const a = k01(l, 0, 0.4);
     ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(0,193,202,0.07)'; ctx.fillRect(bx, by, bw, bh); ctx.fillStyle = C.tq; ctx.fillRect(bx + bw - 10, by, 10, bh); ctx.restore();
-    kline(ctx, P ? 'قبل أن تُطلق وكيلاً في مؤسستك' : 'قبل أن تُطلق وكيلاً في مؤسستك التعليمية', bx + bw - 50, by + 70, l, 0.2, { size: P ? 42 : 46, w: 800, align: 'right' });
-    txt(ctx, 'رأي تطبيقي — د. يحيى الأمير', bx + bw - 50, by + 125, { size: 24, w: 600, align: 'right', color: C.gr, alpha: k01(l, 0.6, 0.4) });
+    if (P) { kline(ctx, 'قبل أن تُطلق وكيلاً', bx + bw - 50, by + 55, l, 0.2, { size: 42, w: 800, align: 'right' }); kline(ctx, 'في مؤسستك التعليمية', bx + bw - 50, by + 105, l, 0.3, { size: 42, w: 800, align: 'right' }); }
+    else kline(ctx, 'قبل أن تُطلق وكيلاً في مؤسستك التعليمية', bx + bw - 50, by + 70, l, 0.2, { size: 44, w: 800, align: 'right' });
+    txt(ctx, 'رأي تطبيقي — د. يحيى الأمير', bx + bw - 50, by + (P ? 150 : 125), { size: 24, w: 600, align: 'right', color: C.gr, alpha: k01(l, 0.6, 0.4) });
     ['ما المهمة بالضبط؟', 'مَن يراجع قراراته؟', 'كيف نوقفه إذا أخطأ؟'].forEach((it, i) => {
-      const iy = by + (P ? 250 : 235) + i * (P ? 150 : 115), t0 = 1.0 + i * 1.3;
-      txt(ctx, ['١', '٢', '٣'][i], bx + bw - 60, iy, { size: P ? 60 : 56, w: 800, color: C.tq, alpha: k01(l, t0, 0.3) });
+      const iy = by + (P ? 250 : 250) + i * (P ? 150 : 135), t0 = 1.0 + i * 1.3;
+      txt(ctx, String(i + 1), bx + bw - 60, iy, { size: P ? 60 : 56, w: 800, color: C.tq, alpha: k01(l, t0, 0.3) });
       kline(ctx, it, bx + bw - 125, iy, l, t0, { size: P ? 48 : 50, w: 800, align: 'right' });
       const tx = bx + (P ? 80 : 110);
       ctx.save(); ctx.globalAlpha = k01(l, t0, 0.3); ctx.strokeStyle = 'rgba(11,15,18,0.3)'; ctx.lineWidth = 2; ctx.strokeRect(tx - 32, iy - 32, 64, 64); ctx.restore();
-      ink(ctx, tickPts(tx, iy, 44), eo(k01(l, t0 + 0.7, 0.35)), { w: 9 });
+      ink(ctx, tickPts(tx, iy, 44), eo(k01(l, t0 + 0.7, 0.35)), { w: 10 });
     });
     kline(ctx, 'الحوكمة قبل التوسّع', bx + bw / 2, by + bh - 60, l, 5.0, { size: 44, w: 800, color: C.tqD });
     colophon(ctx, t);
@@ -349,6 +356,7 @@
     const ly = P ? TOP + 170 : H * 0.25;
     logoMark(ctx, cx, ly, P ? 260 : 230, k01(l, 0, 1.4));
     txt(ctx, 'YAHYA ALAMEER', cx, ly + (P ? 80 : 72), { size: P ? 40 : 36, w: 700, fam: LA, rtl: false, alpha: k01(l, 1.0, 0.5) });
+    { const nw = measure(ctx, 'YAHYA ALAMEER', P ? 40 : 36, 700, LA); ink(ctx, linePts(cx + nw / 2, ly + (P ? 140 : 128), cx - nw / 2, ly + (P ? 144 : 132), 5), eio(k01(l, 1.3, 0.6)), { w: 10 }); }
     txt(ctx, 'INSTRUCTIONAL DESIGN', cx, ly + (P ? 118 : 106), { size: P ? 20 : 18, w: 500, fam: LA, rtl: false, color: C.gr, alpha: k01(l, 1.1, 0.5) });
     const qy = P ? H * 0.43 : H * 0.52;
     kline(ctx, 'هل جرّبت وكيلاً في عملك؟', cx, qy, l, 1.2, { size: P ? 56 : 60, w: 800 });
@@ -363,7 +371,7 @@
     });
     const ry = P ? hy + 4 * 56 : hy + 56;
     ctx.fillStyle = C.ink; ctx.fillRect(P ? 60 : 96, ry, W - (P ? 120 : 192), 1.2);
-    txt(ctx, 'Sources ¹ ² ³ — Gartner, AI Hype Cycle (October 2026)', cx, ry + 38, { size: 22, w: 500, fam: LA, rtl: false, color: C.gr, alpha: k01(l, 2.4, 0.5) });
+    txt(ctx, 'المصادر 1 · 2 · 3 · 4 — جارتنر، دورة الضجيج للذكاء الاصطناعي (أكتوبر 2026)', cx, ry + 38, { size: P ? 22 : 22, w: 600, color: C.gr, alpha: k01(l, 2.4, 0.5) });
   }
 
   // ---------------------------------------------------------------- transitions: page slides in from the left (RTL page turn)
