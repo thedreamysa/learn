@@ -117,10 +117,29 @@
 
   // ---------------------------------------------------------------- 3D icons
   // an extruded, glossy rounded tile with a white glyph. pop = 0..1 entrance.
+  // Canva-rendered clay button (keyed). Colour variants are tinted from the turquoise original.
+  const BTN = { img: null, red: null, black: null, capX: 0.5, capY: 0.43, capW: 0.8, scale: 1.12 };
+  function icon3dImg(ctx, kind, x, y, s, o) {
+    const { pop = 1, tilt = 0, color = C.tq, glyph = C.wh, press = 0 } = o;
+    const im = color === C.red ? BTN.red : color === C.bk ? BTN.black : BTN.img;
+    const sc = eb(pop), w = s * BTN.scale, h = w * im.height / im.width;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(tilt); ctx.scale(sc, sc);
+    ctx.save(); ctx.globalAlpha = 0.2; ctx.fillStyle = '#3A5560'; ctx.filter = `blur(${Math.max(3, s * 0.08)}px)`;
+    ctx.beginPath(); ctx.ellipse(0, h * 0.42, w * 0.38, s * 0.09, 0, 0, 7); ctx.fill(); ctx.restore();
+    ctx.translate(0, press * s * 0.03); ctx.scale(1, 1 - press * 0.04);
+    ctx.drawImage(im, -w / 2, -h / 2, w, h);
+    const gx = (BTN.capX - 0.5) * w, gy = (BTN.capY - 0.5) * h;
+    ctx.translate(gx, gy);
+    ctx.save(); ctx.shadowColor = 'rgba(0,50,55,0.28)'; ctx.shadowBlur = s * 0.03; ctx.shadowOffsetY = s * 0.022;
+    drawGlyph(ctx, kind, w * BTN.capW * 0.5, glyph, o);
+    ctx.restore();
+    ctx.restore();
+  }
   function icon3d(ctx, kind, x, y, s, o = {}) {
     // clay pillow button: white base slab + domed coloured cap that sinks when pressed
     const { pop = 1, tilt = 0, color = C.tq, dark = C.tqD, glyph = C.wh, press = 0 } = o;
     if (pop <= 0) return;
+    if (BTN.img) return icon3dImg(ctx, kind, x, y, s, o);
     const sc = eb(pop);
     ctx.save(); ctx.translate(x, y); ctx.rotate(tilt); ctx.scale(sc, sc);
     const r = s * 0.26, bw = s * 1.08, bh = s * 1.08, by = s * 0.08;
@@ -137,13 +156,13 @@
     ctx.fillStyle = dark; rr(ctx, -cs / 2, cy0 + ext, cs, cs, r); ctx.fill();
     // cap top with soft dome shading
     const gc = ctx.createRadialGradient(-cs * 0.2, cy0 + cs * 0.15, cs * 0.05, 0, cy0 + cs * 0.55, cs * 0.85);
-    gc.addColorStop(0, shade(color, 0.45)); gc.addColorStop(0.55, color); gc.addColorStop(1, dark);
+    gc.addColorStop(0, shade(color, 0.3)); gc.addColorStop(0.6, color); gc.addColorStop(1, shade(dark, 0.1));
     ctx.fillStyle = gc; rr(ctx, -cs / 2, cy0, cs, cs, r); ctx.fill();
-    // specular sheen
+    // soft inner glow (matte clay, no hard gloss)
     ctx.save(); rr(ctx, -cs / 2, cy0, cs, cs, r); ctx.clip();
-    const sh = ctx.createLinearGradient(0, cy0, 0, cy0 + cs * 0.45);
-    sh.addColorStop(0, 'rgba(255,255,255,0.55)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = sh; rr(ctx, -cs * 0.42, cy0 + cs * 0.05, cs * 0.84, cs * 0.34, r * 0.8); ctx.fill();
+    const ig = ctx.createRadialGradient(-cs * 0.18, cy0 + cs * 0.2, 0, -cs * 0.18, cy0 + cs * 0.2, cs * 0.6);
+    ig.addColorStop(0, 'rgba(255,255,255,0.22)'); ig.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = ig; ctx.fillRect(-cs / 2, cy0, cs, cs);
     ctx.restore();
     // embossed glyph
     ctx.save(); ctx.translate(0, cy0 + cs / 2);
@@ -167,8 +186,7 @@
     const top = -h / 2 - ext;
     const gc = ctx.createLinearGradient(0, top, 0, top + h); gc.addColorStop(0, shade(color, 0.4)); gc.addColorStop(1, color);
     ctx.fillStyle = gc; rr(ctx, -w / 2, top, w, h, r); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.35)'; rr(ctx, -w * 0.42, top + h * 0.08, w * 0.84, h * 0.28, h * 0.14); ctx.fill();
-    ctx.save(); ctx.shadowColor = 'rgba(0,50,55,0.35)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 3;
+        ctx.save(); ctx.shadowColor = 'rgba(0,50,55,0.35)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 3;
     txt(ctx, label, 0, top + h / 2 + 3, { size: h * 0.46, w: 800, color: C.wh }); ctx.restore();
     ctx.restore();
   }
@@ -279,7 +297,7 @@
   function chrome(ctx, t, o = {}) {
     const dark = !!o.dark;
     // top: logo mark + series tag (right side in RTL), source badge (left)
-    const m = P ? 60 : 56, top = P ? 230 : 52;
+    const m = P ? 60 : 56, top = P ? 300 : 52;
     logoMark(ctx, W - m - 46, top + 28, 92, { dark });
     txt(ctx, 'تقرير في دقائق · 3', W - m - 110, top + 6, { size: P ? 30 : 26, w: 800, align: 'right', color: dark ? C.wh : C.bk });
     txt(ctx, 'تقنيات التعليم والذكاء الاصطناعي', W - m - 110, top + 40, { size: P ? 22 : 19, w: 500, align: 'right', color: dark ? '#9FB0B8' : C.gr });
@@ -292,7 +310,7 @@
     ctx.fillStyle = C.tq; ctx.beginPath(); ctx.arc(sx + sw - 24, sy + 23, 7, 0, 7); ctx.fill();
     txt(ctx, sp, sx + sw - 42, sy + 24, { size: P ? 24 : 22, w: 700, align: 'right', color: dark ? '#DDE6EA' : C.bk });
     // bottom name bar
-    const bh = P ? 84 : 72, by = H - FREE_BOTTOM - bh - (P ? 40 : 34), bw = P ? W - 120 : 760, bx = P ? 60 : W - m - bw;
+    const bh = P ? 84 : 72, by = P ? Math.round(H * 0.775) - bh : H - bh - 34, bw = P ? W - 120 : 760, bx = P ? 60 : W - m - bw;
     ctx.save(); ctx.shadowColor = 'rgba(0,40,45,0.18)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
     ctx.fillStyle = C.bk; rr(ctx, bx, by, bw, bh, bh / 2); ctx.fill(); ctx.restore();
     ctx.fillStyle = C.tq; rr(ctx, bx + bw - 250, by, 250, bh, bh / 2); ctx.fill();
@@ -312,10 +330,10 @@
   function hook(ctx, t) {
     const l = t;
     bg(ctx, t);
-    const cy = P ? H * 0.47 : H * 0.47;
+    const cy = P ? H * 0.5 : H * 0.47;
     // floating decor
     // agent icon on the side (top in portrait)
-    const ix = P ? cx : W * 0.72, iy = P ? cy - 330 : cy - 10, is = P ? 230 : 300;
+    const ix = P ? cx : W * 0.72, iy = P ? cy - 300 : cy - 10, is = P ? 230 : 300;
     icon3d(ctx, 'agent', ix, iy + float(t, 0, 6), is, { pop: k01(l, 0.15, 0.55), tilt: -0.06 });
     // counter 0 → N
     const N = S.FACTS.deployed, cp = eo(k01(l, 0.6, 1.3)), v = Math.round(N * cp);
@@ -350,7 +368,7 @@
       const [dx, dy] = spots[i];
       icon3d(ctx, kd, cx + dx, cy - 40 + dy + float(t, i * 1.7, 10), (P ? 110 : 120) * (i % 2 ? 0.85 : 1), { pop: k01(l, 0.6 + i * 0.12, 0.5), tilt: (i % 2 ? 0.08 : -0.08) });
     });
-    const ty = P ? H * 0.6 : H * 0.7;
+    const ty = P ? H * 0.58 : H * 0.655;
     kline(ctx, 'وكلاء الذكاء الاصطناعي', cx, ty, l, 1.2, { size: P ? 92 : 96, w: 800, color: C.bk });
     kline(ctx, 'بين الضجيج والواقع', cx, ty + (P ? 120 : 115), l, 1.5, { size: P ? 80 : 80, w: 800, color: C.tq });
     kline(ctx, 'AI Agents: Hype vs. Reality', cx, ty + (P ? 210 : 195), l, 1.8, { size: P ? 36 : 34, w: 500, fam: LA, rtl: false, color: C.gr });
@@ -361,18 +379,18 @@
   function curve(ctx, t) {
     const l = local(t, 'curve');
     bg(ctx, t);
-    const x0 = P ? 90 : 230, x1 = P ? W - 90 : W - 230, yb = P ? H * 0.72 : H * 0.78, hgt = P ? 720 : 470;
+    const x0 = P ? 90 : 230, x1 = P ? W - 90 : W - 230, yb = P ? H * 0.69 : H * 0.78, hgt = P ? 570 : 470;
     // generic hype-cycle shape (normalised)
-    const f = (u) => { // u 0..1 → height 0..1
+    const f = (u) => { // u 0..1 → height 0..1: rise → peak → smooth trough → slope → plateau
       const peak = Math.exp(-Math.pow((u - 0.22) / 0.085, 2));
-      const slope = clamp((u - 0.42) / 0.58);
-      return 0.92 * peak + 0.06 + 0.48 * (1 - Math.pow(1 - slope, 2.2)) * (u > 0.42 ? 1 : 0);
+      const slope = 1 / (1 + Math.exp(-(u - 0.64) / 0.09));
+      return 0.9 * peak + 0.05 + 0.5 * slope;
     };
     const pt = (u) => [x1 - (x1 - x0) * u, yb - f(u) * hgt]; // RTL: time flows right → left
     // axes
     ctx.strokeStyle = 'rgba(11,15,18,0.18)'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(x1, yb - hgt - 30); ctx.lineTo(x1, yb); ctx.lineTo(x0 - 10, yb); ctx.stroke();
-    txt(ctx, 'التوقعات', x1 + (P ? -10 : 30), yb - hgt - 50, { size: 28, w: 700, color: C.gr, align: P ? 'right' : 'center' });
+    txt(ctx, 'التوقعات', x1 + (P ? -10 : 30), yb - hgt - (P ? 10 : 50), { size: 28, w: 700, color: C.gr, align: P ? 'right' : 'center' });
     txt(ctx, 'الزمن', x0 + 20, yb + 36, { size: 28, w: 700, color: C.gr, align: 'left' });
     // the curve draws
     const dp = eio(k01(l, 0.3, 2.2));
@@ -388,7 +406,7 @@
     // phase labels (generic Hype Cycle phases)
     const phases = [
       { u: 0.22, ar: 'قمة التوقعات المتضخمة', t0: 3.0, dy: -1 },
-      { u: 0.44, ar: 'قاع خيبة الأمل', t0: 4.6, dy: -1 },
+      { u: 0.4, ar: 'قاع خيبة الأمل', t0: 4.6, dy: -1 },
       { u: 0.86, ar: 'هضبة الإنتاجية', t0: 6.2, dy: -1 },
     ];
     phases.forEach((ph) => {
@@ -405,7 +423,7 @@
       ctx.restore();
     });
     // the riding dot ("الوكلاء"): rides to the peak, then slides toward the trough
-    const ru = l < 2.5 ? 0 : l < 4.4 ? 0.22 * eio((l - 2.5) / 1.9) : 0.22 + 0.2 * eio((l - 4.4) / 2.2);
+    const ru = l < 2.5 ? 0 : l < 4.4 ? 0.22 * eio((l - 2.5) / 1.9) : 0.22 + 0.18 * eio((l - 4.4) / 2.2);
     if (l > 2.4) {
       const [dx, dy] = pt(ru);
       const g = ctx.createRadialGradient(dx, dy, 0, dx, dy, 70); g.addColorStop(0, 'rgba(0,193,202,0.45)'); g.addColorStop(1, 'rgba(0,193,202,0)');
@@ -413,13 +431,13 @@
       icon3d(ctx, 'agent', dx, dy - 4, P ? 86 : 80, { pop: k01(l, 2.4, 0.4) });
     }
     // headline
-    const hy = P ? H * 0.235 : 190;
+    const hy = P ? H * 0.275 : 190;
     kline(ctx, 'أين تقف الوكلاء على منحنى الضجيج؟', P ? cx : W - 230, hy, l, 0.1, { size: P ? 54 : 56, w: 800, align: P ? 'center' : 'right' });
     // the hand points at the active phase
         const at = (u, dx = 30, dy = 44) => { const [x, y] = pt(u); return [x + dx, y + dy]; };
-    const A = at(0.22), B = at(0.44), Cc = at(0.86);
+    const A = at(0.22), B = at(0.4), Cc = at(0.86);
     const hk = handAt([[2.6, W + 220, H + 260, -0.55, 0], [3.4, A[0], A[1], -0.45, 0], [4.4, A[0], A[1], -0.45, 0], [5.0, B[0], B[1], -0.45, 0], [6.2, B[0], B[1], -0.45, 0], [6.9, Cc[0], Cc[1], -0.45, 0], [8.0, Cc[0], Cc[1], -0.45, 0], [9.0, W + 220, H + 260, -0.55, 0]], l);
-    hand(ctx, hk[1], hk[2], P ? 105 : 100, { ang: hk[3] });
+    hand(ctx, hk[1], hk[2], P ? 85 : 100, { ang: hk[3] });
     chrome(ctx, t);
   }
 
@@ -428,9 +446,9 @@
     const l = local(t, 'cancel');
     bg(ctx, t);
     const cols = 5, rows = P ? 4 : 2, n = cols * rows;
-    const cw = P ? 168 : 200, ch = P ? 130 : 165, gx = P ? 22 : 32, gy = P ? 24 : 36;
+    const cw = P ? 160 : 200, ch = P ? 100 : 165, gx = P ? 20 : 32, gy = P ? 14 : 36;
     const gw = cols * cw + (cols - 1) * gx, gh = rows * ch + (rows - 1) * gy;
-    const ox = P ? (W - gw) / 2 : 70, oy = P ? 900 : (H - gh) / 2 + 40;
+    const ox = P ? (W - gw) / 2 : 70, oy = P ? 905 : (H - gh) / 2 - 10;
     const cut = Math.round(n * S.FACTS.cancel / 100);
     // deterministic choice of which cards get cancelled
     const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => U.hash(a, 7) - U.hash(b, 7));
@@ -454,7 +472,7 @@
       ctx.restore();
     }
     // the statement
-    const tx = P ? cx : W * 0.835, ty = P ? 520 : H * 0.36;
+    const tx = P ? cx : W * 0.835, ty = P ? 560 : H * 0.3;
     if (l > 2.2) {
       const N = S.FACTS.cancel, v = Math.round(N * eo(k01(l, 2.3, 1.6)));
       txt(ctx, `+${v}%`, tx, ty, { size: P ? 190 : 170, w: 800, fam: LA, rtl: false, color: C.red, shadow: true });
@@ -510,11 +528,11 @@
     bg(ctx, t);
     const cy = P ? H * 0.25 : H * 0.22;
     logoFull(ctx, cx, cy, P ? 300 : 270, { draw: k01(l, 0, 1.0) });
-    kline(ctx, 'سؤالك للتعليقات: هل جرّبت وكيلاً في عملك؟', cx, P ? H * 0.42 : H * 0.44, l, 0.9, { size: P ? 40 : 46, w: 800 });
+    kline(ctx, 'سؤالك للتعليقات: هل جرّبت وكيلاً في عملك؟', cx, P ? H * 0.4 : H * 0.44, l, 0.9, { size: P ? 40 : 46, w: 800 });
     // handles grid
     const items = [['X', '@y7yr_'], ['TikTok', '@i.y7y'], ['LinkedIn', 'in/yahya-alameer'], ['Links', 'linktr.ee/yalameer']];
     const cols = P ? 1 : 4, bw = P ? 640 : 400, bh = 84, gap = 20;
-    const tw = cols * bw + (cols - 1) * gap, ox = (W - tw) / 2, oy = P ? H * 0.58 : H * 0.79;
+    const tw = cols * bw + (cols - 1) * gap, ox = (W - tw) / 2, oy = P ? H * 0.545 : H * 0.79;
     items.forEach(([k, v], i) => {
       const c = i % cols, r = Math.floor(i / cols), x = ox + c * (bw + gap), y = oy + r * (bh + gap);
       const p = k01(l, 1.3 + i * 0.12, 0.4); if (p <= 0) return;
@@ -526,14 +544,14 @@
       ctx.restore();
     });
     // clay "follow" button pressed by the hand
-    const fbx = cx, fby = P ? H * 0.47 + 90 : H * 0.44 + 125;
+    const fbx = cx, fby = P ? H * 0.4 + 125 : H * 0.44 + 125;
     const fp = k01(l, 2.0, 0.5);
     const fex = fbx + (P ? 150 : 140) + 18, fey = fby - 8;
     const hkE = handAt([[2.2, W + 400, fey + 40, -Math.PI / 2, 0], [3.1, fex, fey, -Math.PI / 2, 0], [3.25, fex - 6, fey, -Math.PI / 2, 1], [3.5, fex, fey, -Math.PI / 2, 0], [4.6, W + 400, fey + 40, -Math.PI / 2, 0]], l);
     clayButton(ctx, 'تابعني', fbx, fby, P ? 300 : 280, P ? 96 : 90, { pop: fp, press: hkE[4] });
     ripple(ctx, fex, fey, l, 3.25, 120);
     hand(ctx, hkE[1], hkE[2], P ? 130 : 115, { ang: hkE[3], press: hkE[4] });
-    txt(ctx, 'Source: Gartner — AI Hype Cycle (October 2026)', cx, P ? H - FREE_BOTTOM - 110 : H - 70, { size: 24, w: 500, fam: LA, rtl: false, color: C.gr, alpha: k01(l, 1.8, 0.5) });
+    txt(ctx, 'Source: Gartner — AI Hype Cycle (October 2026)', cx, P ? H * 0.545 + 4 * 104 + 30 : H - 70, { size: 24, w: 500, fam: LA, rtl: false, color: C.gr, alpha: k01(l, 1.8, 0.5) });
   }
 
   // ---------------------------------------------------------------- transitions (iris from the hand)
@@ -560,6 +578,11 @@
     async init() {
       HAND.point.img = await Studio.loadImage('assets/hand/point.png');
       HAND.press.img = await Studio.loadImage('assets/hand/press.png');
+      try {
+        BTN.img = await Studio.loadImage('assets/button/button.png');
+        BTN.red = await Studio.loadImage('assets/button/button-red.png');
+        BTN.black = await Studio.loadImage('assets/button/button-black.png');
+      } catch (e) { BTN.img = null; }
       const F = 'assets/fonts/';
       for (const w of [500, 700, 800]) {
         await Studio.loadFont('Tajawal', F + `tajawal-arabic-${w}-normal.woff2`, w);
