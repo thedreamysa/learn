@@ -240,46 +240,22 @@
   // ---------------------------------------------------------------- the hand
   // soft clay 3D hand (no outlines). Index finger along -y; (x,y) = fingertip.
   const SKIN = { hi: '#FFE6D8', mid: '#F6C3A6', lo: '#DE9A79', ao: 'rgba(150,80,50,0.35)' };
+  // 3D-rendered hand (Canva render, background keyed). (x,y) = fingertip; ang as before
+  // (finger along -y rotated by ang), so the finger points along dir = ang - 90°.
+  const HAND = { point: { img: null, tipX: 1837, tipY: 49, a0: -0.5, k: 3.6 }, press: { img: null, tipX: 1407, tipY: 1787, a0: 1.42, k: 2.9 } };
   function hand(ctx, x, y, s, o = {}) {
     const { ang = 0, press = 0, alpha = 1 } = o;
-    if (alpha <= 0) return;
-    ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(x, y); ctx.rotate(ang);
-    const k = s / 100; ctx.scale(k, k); ctx.translate(0, press * 8);
-    // light comes from the screen's top-left whatever the hand's rotation
-    const lx = -0.45 * Math.cos(-ang) + 0.55 * Math.sin(-ang), ly = -0.45 * Math.sin(-ang) - 0.55 * Math.cos(-ang);
-    const blob = (draw, cx, cy, r) => {
-      const g = ctx.createRadialGradient(cx + lx * r * 0.7, cy + ly * r * 0.7, r * 0.05, cx, cy, r * 1.15);
-      g.addColorStop(0, SKIN.hi); g.addColorStop(0.5, SKIN.mid); g.addColorStop(1, SKIN.lo);
-      ctx.save(); ctx.shadowColor = SKIN.ao; ctx.shadowBlur = 10; ctx.shadowOffsetX = -lx * 6; ctx.shadowOffsetY = -ly * 6;
-      ctx.fillStyle = g; draw(); ctx.fill(); ctx.restore();
-    };
-    const cap = (x1, y1, x2, y2, w) => () => { // capsule path
-      const a = Math.atan2(y2 - y1, x2 - x1), len = Math.hypot(x2 - x1, y2 - y1);
-      ctx.beginPath();
-      ctx.arc(x1, y1, w / 2, a + Math.PI / 2, a - Math.PI / 2);
-      ctx.arc(x2, y2, w / 2, a - Math.PI / 2, a + Math.PI / 2);
-      ctx.closePath();
-    };
-    // drop shadow of the whole hand
-    ctx.save(); ctx.globalAlpha *= 0.18; ctx.fillStyle = '#2E4650'; ctx.filter = 'blur(14px)';
-    ctx.translate(-lx * 30, -ly * 30); ctx.beginPath(); ctx.ellipse(16, 140, 70, 110, 0, 0, 7); ctx.fill(); ctx.restore();
-    // sleeve (brand turquoise) + wrist
-    const gs = ctx.createLinearGradient(-40, 0, 80, 0); gs.addColorStop(0, shade(C.tq, 0.35)); gs.addColorStop(1, C.tqD);
-    ctx.fillStyle = gs; cap(18, 230, 26, 420, 110)(); ctx.fill();
-    ctx.fillStyle = '#FFFFFF'; cap(10, 222, 30, 222, 112)(); ctx.fill();
-    blob(cap(14, 150, 18, 215, 76), 16, 182, 52);
-    // palm
-    blob(() => { ctx.beginPath(); ctx.ellipse(12, 128, 52, 54, 0, 0, 7); }, 12, 128, 58);
-    // curled fingers (knuckles to the right of the index finger)
-    blob(cap(18, 86, 50, 90, 30), 34, 88, 26);
-    blob(cap(20, 112, 54, 114, 30), 37, 113, 26);
-    blob(cap(20, 137, 50, 140, 28), 35, 139, 24);
-    // index finger (pointing)
-    blob(cap(0, 12, 4, 100, 30), 2, 50, 48);
-    // nail
-    ctx.save(); ctx.globalAlpha *= 0.55; ctx.fillStyle = '#FFF1EA'; rr(ctx, -7, 2, 13, 15, 6); ctx.fill(); ctx.restore();
-    // thumb resting across
-    blob(cap(-38, 150, -18, 100, 30), -28, 125, 30);
+    const dir0 = ang - Math.PI / 2, P0 = Math.sin(dir0) > 0.75 && HAND.press.img ? HAND.press : HAND.point;
+    const im = P0.img; if (!im || alpha <= 0) return;
+    const dir = dir0, k = (s * P0.k) / im.width, w = im.width * k, h = im.height * k;
+    ctx.save(); ctx.globalAlpha *= alpha;
+    ctx.translate(x + Math.cos(dir) * press * 14, y + Math.sin(dir) * press * 14);
+    const mirror = Math.cos(dir) < 0;
+    if (mirror) { ctx.rotate(dir - (Math.PI - P0.a0)); ctx.scale(-1, 1); } else ctx.rotate(dir - P0.a0);
+    const ox = -P0.tipX * k, oy = -P0.tipY * k, L = 4000;
+    ctx.shadowColor = 'rgba(30,60,70,0.28)'; ctx.shadowBlur = s * 0.28; ctx.shadowOffsetY = s * 0.16;
+    ctx.drawImage(im, 0, 0, 40, im.height, ox - L, oy, L + 4, h); // sleeve continues off-frame
+    ctx.drawImage(im, ox, oy, w, h);
     ctx.restore();
   }
   // a tap ripple at (x,y) started at t0
@@ -336,12 +312,10 @@
   function hook(ctx, t) {
     const l = t;
     bg(ctx, t);
-    const cy = P ? H * 0.42 : H * 0.47;
+    const cy = P ? H * 0.47 : H * 0.47;
     // floating decor
-    orb(ctx, W * 0.12, H * 0.3 + float(t, 1, 12), P ? 26 : 34, C.tq, 0.8);
-    orb(ctx, W * 0.88, H * 0.7 + float(t, 2, 10), P ? 18 : 22, C.tqL, 0.9);
     // agent icon on the side (top in portrait)
-    const ix = P ? cx : W * 0.72, iy = P ? cy - 360 : cy - 10, is = P ? 230 : 300;
+    const ix = P ? cx : W * 0.72, iy = P ? cy - 330 : cy - 10, is = P ? 230 : 300;
     icon3d(ctx, 'agent', ix, iy + float(t, 0, 6), is, { pop: k01(l, 0.15, 0.55), tilt: -0.06 });
     // counter 0 → N
     const N = S.FACTS.deployed, cp = eo(k01(l, 0.6, 1.3)), v = Math.round(N * cp);
@@ -387,7 +361,7 @@
   function curve(ctx, t) {
     const l = local(t, 'curve');
     bg(ctx, t);
-    const x0 = P ? 90 : 230, x1 = P ? W - 90 : W - 230, yb = P ? H * 0.66 : H * 0.78, hgt = P ? 560 : 470;
+    const x0 = P ? 90 : 230, x1 = P ? W - 90 : W - 230, yb = P ? H * 0.72 : H * 0.78, hgt = P ? 720 : 470;
     // generic hype-cycle shape (normalised)
     const f = (u) => { // u 0..1 → height 0..1
       const peak = Math.exp(-Math.pow((u - 0.22) / 0.085, 2));
@@ -442,10 +416,10 @@
     const hy = P ? H * 0.235 : 190;
     kline(ctx, 'أين تقف الوكلاء على منحنى الضجيج؟', P ? cx : W - 230, hy, l, 0.1, { size: P ? 54 : 56, w: 800, align: P ? 'center' : 'right' });
     // the hand points at the active phase
-        const at = (u, dx = 46, dy = 56) => { const [x, y] = pt(u); return [x + dx, y + dy]; };
+        const at = (u, dx = 30, dy = 44) => { const [x, y] = pt(u); return [x + dx, y + dy]; };
     const A = at(0.22), B = at(0.44), Cc = at(0.86);
     const hk = handAt([[2.6, W + 220, H + 260, -0.55, 0], [3.4, A[0], A[1], -0.45, 0], [4.4, A[0], A[1], -0.45, 0], [5.0, B[0], B[1], -0.45, 0], [6.2, B[0], B[1], -0.45, 0], [6.9, Cc[0], Cc[1], -0.45, 0], [8.0, Cc[0], Cc[1], -0.45, 0], [9.0, W + 220, H + 260, -0.55, 0]], l);
-    hand(ctx, hk[1], hk[2], P ? 150 : 140, { ang: hk[3] });
+    hand(ctx, hk[1], hk[2], P ? 105 : 100, { ang: hk[3] });
     chrome(ctx, t);
   }
 
@@ -508,22 +482,22 @@
     txt(ctx, 'كيف نبني الوكيل؟', ax, ay + (P ? 110 : 140), { size: P ? 50 : 52, w: 800, color: swap > 0.1 ? '#8A979E' : C.bk, alpha: clamp(k01(l, 0.4, 0.4)) });
     if (swap > 0) { // strike-through
       ctx.save(); ctx.font = `800 ${P ? 50 : 52}px ${AR}`; const tw = ctx.measureText('كيف نبني الوكيل؟').width; ctx.restore();
-      ctx.strokeStyle = C.red; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255,90,95,0.8)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(ax + tw / 2, ay + (P ? 112 : 142)); ctx.lineTo(ax + tw / 2 - tw * swap, ay + (P ? 112 : 142)); ctx.stroke();
     }
     // arrow
     const ap = eo(k01(l, 1.4, 0.5));
     if (ap > 0) {
       ctx.save(); ctx.strokeStyle = C.tq; ctx.fillStyle = C.tq; ctx.lineWidth = 10; ctx.lineCap = 'round';
-      if (P) { const y0 = ay + 180, y1 = y0 + 150 * ap; ctx.beginPath(); ctx.moveTo(cx, y0); ctx.lineTo(cx, y1); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx - 24, y1 - 10); ctx.lineTo(cx, y1 + 22); ctx.lineTo(cx + 24, y1 - 10); ctx.fill(); }
+      if (P) { const y0 = ay + 165, y1 = y0 + 95 * ap; ctx.beginPath(); ctx.moveTo(cx, y0); ctx.lineTo(cx, y1); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx - 24, y1 - 10); ctx.lineTo(cx, y1 + 22); ctx.lineTo(cx + 24, y1 - 10); ctx.fill(); }
       else { const x0 = cx + 150, x1 = x0 - 300 * ap; ctx.beginPath(); ctx.moveTo(x0, cy - 40); ctx.lineTo(x1, cy - 40); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x1 + 10, cy - 64); ctx.lineTo(x1 - 22, cy - 40); ctx.lineTo(x1 + 10, cy - 16); ctx.fill(); }
       ctx.restore();
     }
     const sd = P ? 1 : -1, sA = P ? -Math.PI / 2 : Math.PI / 2, sx0 = bxx + sd * (P ? 120 : 130), sy0 = byy - 50; // from the right (9:16) / left (16:9), finger horizontal
     const hkS = handAt([[2.4, sx0 + sd * 700, sy0 + 60, sA, 0], [3.2, sx0, sy0, sA, 0], [3.35, sx0, sy0, sA, 1], [3.6, sx0, sy0, sA, 0], [4.4, sx0 + sd * 700, sy0 + 60, sA, 0]], l);
     icon3d(ctx, 'scale', bxx, byy - 40, (P ? 220 : 240) * (0.7 + swap * 0.3), { pop: k01(l, 1.9, 0.5), press: hkS[4] });
-    kline(ctx, 'مَن يُحاسَب؟', bxx, byy + (P ? 140 : 160), l, 2.2, { size: P ? 72 : 76, w: 800, color: C.tq });
-    kline(ctx, 'الحوكمة قبل التوسّع', bxx, byy + (P ? 225 : 245), l, 2.6, { size: P ? 42 : 42, w: 500, color: C.gr });
+    kline(ctx, 'مَن يُحاسَب؟', bxx, byy + (P ? 180 : 200), l, 2.2, { size: P ? 72 : 76, w: 800, color: C.tq });
+    kline(ctx, 'الحوكمة قبل التوسّع', bxx, byy + (P ? 265 : 285), l, 2.6, { size: P ? 42 : 42, w: 500, color: C.gr });
     // the hand taps the scale
     ripple(ctx, sx0, sy0, l, 3.35, 110);
     hand(ctx, hkS[1], hkS[2], P ? 160 : 150, { ang: hkS[3], press: hkS[4] });
@@ -540,7 +514,7 @@
     // handles grid
     const items = [['X', '@y7yr_'], ['TikTok', '@i.y7y'], ['LinkedIn', 'in/yahya-alameer'], ['Links', 'linktr.ee/yalameer']];
     const cols = P ? 1 : 4, bw = P ? 640 : 400, bh = 84, gap = 20;
-    const tw = cols * bw + (cols - 1) * gap, ox = (W - tw) / 2, oy = P ? H * 0.58 : H * 0.74;
+    const tw = cols * bw + (cols - 1) * gap, ox = (W - tw) / 2, oy = P ? H * 0.58 : H * 0.79;
     items.forEach(([k, v], i) => {
       const c = i % cols, r = Math.floor(i / cols), x = ox + c * (bw + gap), y = oy + r * (bh + gap);
       const p = k01(l, 1.3 + i * 0.12, 0.4); if (p <= 0) return;
@@ -552,13 +526,13 @@
       ctx.restore();
     });
     // clay "follow" button pressed by the hand
-    const fbx = P ? cx : cx, fby = P ? H * 0.47 + 90 : H * 0.55 + 105;
+    const fbx = cx, fby = P ? H * 0.47 + 90 : H * 0.44 + 125;
     const fp = k01(l, 2.0, 0.5);
     const fex = fbx + (P ? 150 : 140) + 18, fey = fby - 8;
     const hkE = handAt([[2.2, W + 400, fey + 40, -Math.PI / 2, 0], [3.1, fex, fey, -Math.PI / 2, 0], [3.25, fex - 6, fey, -Math.PI / 2, 1], [3.5, fex, fey, -Math.PI / 2, 0], [4.6, W + 400, fey + 40, -Math.PI / 2, 0]], l);
     clayButton(ctx, 'تابعني', fbx, fby, P ? 300 : 280, P ? 96 : 90, { pop: fp, press: hkE[4] });
     ripple(ctx, fex, fey, l, 3.25, 120);
-    hand(ctx, hkE[1], hkE[2], P ? 150 : 140, { ang: hkE[3], press: hkE[4] });
+    hand(ctx, hkE[1], hkE[2], P ? 130 : 115, { ang: hkE[3], press: hkE[4] });
     txt(ctx, 'Source: Gartner — AI Hype Cycle (October 2026)', cx, P ? H - FREE_BOTTOM - 110 : H - 70, { size: 24, w: 500, fam: LA, rtl: false, color: C.gr, alpha: k01(l, 1.8, 0.5) });
   }
 
@@ -584,6 +558,8 @@
     fadeOut: 0.8,
     post: { vignette: 0.1, grain: 0.012, paper: 0 },
     async init() {
+      HAND.point.img = await Studio.loadImage('assets/hand/point.png');
+      HAND.press.img = await Studio.loadImage('assets/hand/press.png');
       const F = 'assets/fonts/';
       for (const w of [500, 700, 800]) {
         await Studio.loadFont('Tajawal', F + `tajawal-arabic-${w}-normal.woff2`, w);
